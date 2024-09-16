@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Login from './src/pages/login/Login';
 import Registro from './src/pages/registroUser/Registro';
 import LivroDetail from './src/pages/livro/LivroDetail';
+import EditProfileScreen from './src/pages/profile/EditarProfileScreen';
 import BottomTabNavigator from './src/pages/BottomTabNavigator'; 
 
 const Stack = createStackNavigator();
@@ -20,6 +21,7 @@ export default function App() {
         <Stack.Screen name="Main" component={BottomTabNavigator} options={{ title: 'Inicio', headerShown: false }} />
 
         <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false  }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

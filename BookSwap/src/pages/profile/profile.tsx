@@ -1,94 +1,177 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import { API_BASE_URL } from '@env'; 
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { styles } from './styles'; // Defina os estilos
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@env';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface Usuario {
-  nome: string;
-  descricao: string;
-  dataCriacao: string;
-  fotoPerfil?: string | null;
-}
-
-export default function PerfilUsuario() {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+const ProfileScreen = ({ navigation }) => {
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
 
-  const fetchUsuario = async () => {
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/usuario/`);
+      const token = await AsyncStorage.getItem('token');
+
+      if (!token) {
+        console.log('Token não encontrado');
+        // Redirecione para a tela de login ou tome outra ação apropriada
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/perfil/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
       const data = await response.json();
-      setUsuario(data);
+
+      if (response.ok) {
+        if (Array.isArray(data) && data.length > 0) {
+          setProfile(data[0]);
+        } else {
+          console.log('Nenhum dado de perfil encontrado');
+        }
+      } else {
+        console.log('Erro ao buscar dados do perfil:', data);
+      }
     } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
+      console.log('Erro ao buscar dados do perfil:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsuario();
-  }, []);
+  const handleEditProfile = () => {
+    navigation.navigate('EditProfile');
+  };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#2c3e51" />
       </View>
     );
   }
 
-  if (!usuario) {
+  if (!profile) {
     return (
       <View style={styles.container}>
-        <Text>Erro ao carregar as informações do usuário.</Text>
+        <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
       </View>
     );
   }
+
+  const { id, usuario, image, seguindo } = profile;
+  const { first_name, last_name, username, email } = usuario;
 
   return (
     <View style={styles.container}>
-      {/* Foto de perfil e nome do usuário */}
-      <View style={styles.profileHeader}>
-        {usuario.fotoPerfil ? (
-          <Image source={{ uri: usuario.fotoPerfil }} style={styles.profileImage} />
+      <View style={styles.header}>
+        {image ? (
+          <Image source={{ uri: image }} style={styles.profileImage} />
         ) : (
-          <View style={styles.noProfileImage}>
-            <Ionicons name="person-circle-outline" size={100} color="#ccc" />
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderText}>Sem Imagem</Text>
           </View>
         )}
-        <Text style={styles.userName}>{usuario.nome}</Text>
+        <Text style={styles.name}>{first_name} {last_name}</Text>
+        <Text style={styles.username}>@{username}</Text>
       </View>
 
-      {/* Data de criação da conta */}
-      <Text style={styles.creationDate}>Data de criação da conta: {usuario.dataCriacao}</Text>
-
-      {/* Descrição */}
-      <View style={styles.descriptionContainer}>
-        <Text style={styles.description}>{usuario.descricao}</Text>
+      <View style={styles.infoContainer}>
+        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
       </View>
 
-      {/* Botões de histórico, resenhas e troca */}
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Historico')}>
-          <Ionicons name="time-outline" size={24} color="#fff" />
-          <Text style={styles.buttonText}>Histórico</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Resenhas')}>
-          <Ionicons name="book-outline" size={24} color="#fff" />
-          <Text style={styles.buttonText}>Resenhas</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Troca')}>
-          <Ionicons name="swap-horizontal-outline" size={24} color="#fff" />
-          <Text style={styles.buttonText}>Quero Trocar</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+        <Text style={styles.editButtonText}>Editar Perfil</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex:1,
+    backgroundColor: '#2c3e51',
+    padding:16,
+  },
+  loadingContainer: {
+    flex:1,
+    backgroundColor: '#2c3e51',
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  profileImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  placeholderImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#34495e',
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  placeholderText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  name: {
+    fontSize:28,
+    fontWeight:'bold',
+    color: '#fff',
+    marginTop:16,
+  },
+  username: {
+    fontSize:20,
+    color:'#ecf0f1',
+    marginBottom: 8,
+  },
+  infoContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  email: {
+    fontSize:18,
+    color:'#ecf0f1',
+    marginBottom: 8,
+  },
+  following: {
+    fontSize:18,
+    color:'#ecf0f1',
+    marginBottom: 24,
+  },
+  editButton: {
+    backgroundColor: '#2980b9',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize:18,
+    fontWeight: 'bold',
+  },
+  noProfileText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+});
+
+export default ProfileScreen;
