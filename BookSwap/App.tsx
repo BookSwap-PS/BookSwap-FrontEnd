@@ -17,11 +17,7 @@ export default function App() {
         <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false  }} />
 
         
-        <Stack.Screen
-          name="Main"
-          component={BottomTabNavigator}
-          options={{ headerShown: false }} 
-        />
+        <Stack.Screen name="Main" component={BottomTabNavigator} options={{ title: 'Inicio', headerShown: false }} />
 
         <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false  }} />
       </Stack.Navigator>

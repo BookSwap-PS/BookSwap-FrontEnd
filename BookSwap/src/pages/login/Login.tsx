@@ -16,40 +16,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function Login() {
-    const navigation = useNavigation(); // Hook para navegação
+    const navigation = useNavigation(); 
 
-    // Estados para armazenar os valores de usuário e senha
     const [usuario, setUsuario] = useState("");
     const [senha, setSenha] = useState("");
 
-    // Função para lidar com o login
     const handleLogin = async () => {
-        // Verificação básica antes de enviar para a API
         if (!usuario || !senha) {
             Alert.alert("Erro", "Por favor, preencha todos os campos.");
             return;
         }
 
         try {
-            // Fazer a requisição POST para a API Django
             const response = await fetch(`${API_BASE_URL}/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    username: usuario, // Enviar o nome de usuário
-                    password: senha,   // Enviar a senha
+                    username: usuario,
+                    password: senha, 
                 }),
             });
 
             const data = await response.json();
             
-            // Verificar se o login foi bem-sucedido
             if (response.ok) {
                 await AsyncStorage.setItem('token', data.access);
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
-                navigation.navigate('Main'); // Redirecionar para a página Home
+                navigation.navigate('Main'); 
             } else {
                 Alert.alert("Erro", data.message || "Login falhou, verifique suas credenciais.");
             }
