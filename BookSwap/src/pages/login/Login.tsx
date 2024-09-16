@@ -11,6 +11,9 @@ import {
 import { useNavigation } from '@react-navigation/native'; // Importe o hook de navegação
 import { style } from "./styles";
 import Logo from "../../assets/Logo.png";
+import { API_BASE_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function Login() {
     const navigation = useNavigation(); // Hook para navegação
@@ -29,7 +32,7 @@ export default function Login() {
 
         try {
             // Fazer a requisição POST para a API Django
-            const response = await fetch('http://10.10.31.132:8000/login/', {
+            const response = await fetch(`${API_BASE_URL}/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -44,12 +47,14 @@ export default function Login() {
             
             // Verificar se o login foi bem-sucedido
             if (response.ok) {
+                await AsyncStorage.setItem('token', data.access);
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
-                navigation.navigate('Livro'); // Redirecionar para a página Home
+                navigation.navigate('Main'); // Redirecionar para a página Home
             } else {
                 Alert.alert("Erro", data.message || "Login falhou, verifique suas credenciais.");
             }
         } catch (error) {
+            console.error("Erro:", error);
             Alert.alert("Erro", "Ocorreu um erro ao se conectar ao servidor.");
         }
     };
