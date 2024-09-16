@@ -11,6 +11,7 @@ import {
     ScrollView
 } from "react-native";
 import { useNavigation } from '@react-navigation/native'; // Importe o hook de navegação
+import { API_BASE_URL } from '@env';
 
 export default function Registro() {
     const navigation = useNavigation(); // Use o hook de navegação
@@ -35,7 +36,7 @@ export default function Registro() {
         }
 
         try {
-            const response = await fetch('http://10.10.31.132:8000/usuario/', {
+            const response = await fetch(`${API_BASE_URL}/usuario/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

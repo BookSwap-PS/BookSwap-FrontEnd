@@ -1,35 +1,40 @@
 import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Gerenciar o token JWT
+import { API_BASE_URL } from '@env';
 import {
     View,
     Text,
     StyleSheet,
     FlatList,
-    Animated,
     Image,
-    ActivityIndicator
+    ActivityIndicator,
+    TouchableOpacity,
+    Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
-// Definir a interface para o tipo de livro
 interface Livro {
     id: number;
     titulo: string;
     autor: string;
     paginas: number;
     editora: string;
+    descricao: string;
+    dataPublicacao: string;
+    dono: number;
     capa?: string | null;
 }
 
-export default function Home() {
-    const [livros, setLivros] = useState<Livro[]>([]); // Tipar o estado como uma lista de 'Livro'
+export default function ListLivro() {
+    const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
-    const fadeAnim = new Animated.Value(0); // Inicialmente invisível
+    const navigation = useNavigation(); // Hook para navegação
 
-    // Função para buscar livros da API
     const fetchLivros = async () => {
         try {
-            const response = await fetch('http://10.10.31.132:8000/livro/');
+            const response = await fetch(`${API_BASE_URL}/livro/`);
             const data = await response.json();
-            console.log('Livros buscados:', data); // Log para verificar os dados
             setLivros(data);
         } catch (error) {
             console.error('Erro ao buscar livros:', error);
@@ -38,31 +43,34 @@ export default function Home() {
         }
     };
 
-    // useEffect para buscar os livros quando o componente for montado
     useEffect(() => {
         fetchLivros();
-
-        // Iniciar animação após 2 segundos (2000ms)
-        setTimeout(() => {
-            Animated.timing(fadeAnim, {
-                toValue: 1, // Fica visível
-                duration: 1000, // Duração da animação
-                useNativeDriver: true,
-            }).start();
-        }, 2000); // Aguarda 2 segundos antes de começar a animação
     }, []);
 
-    // Renderiza um item da lista de livros
-    const renderItem = ({ item }: { item: Livro }) => ( // Tipar 'item' como 'Livro'
-        <View style={styles.bookCard}>
+    const checkAuthAndNavigate = async () => {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+            navigation.navigate('CreateLivro'); // Navega para a tela de criação de livros
+        } else {
+            Alert.alert("Acesso negado", "Você precisa estar autenticado para criar um livro.");
+        }
+    };
+
+    const renderItem = ({ item }: { item: Livro }) => (
+        <TouchableOpacity 
+            style={styles.bookCard} 
+            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
+        >
             <Text style={styles.bookTitle}>{item.titulo}</Text>
+            {item.capa ? (
+                <Image source={{ uri: item.capa }} style={styles.bookImage} />
+            ) : (
+                <Text style={styles.noImageText}>Sem capa disponível</Text>
+            )}
             <Text>Autor: {item.autor}</Text>
             <Text>Páginas: {item.paginas}</Text>
             <Text>Editora: {item.editora}</Text>
-            {item.capa && (
-                <Image source={{ uri: item.capa }} style={styles.bookImage} />
-            )}
-        </View>
+        </TouchableOpacity>
     );
 
     if (loading) {
@@ -75,20 +83,20 @@ export default function Home() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.welcomeText}>Bem-vindo ao Book Swap!</Text>
+            <TouchableOpacity style={styles.createButton} onPress={checkAuthAndNavigate}>
+                <Ionicons name="add-circle-outline" size={24} color="#fff" />
+                <Text style={styles.createButtonText}>Criar Livro</Text>
+            </TouchableOpacity>
 
-            {livros.length === 0 ? (
-                <Text style={styles.emptyText}>Nenhum livro disponível no momento.</Text>
-            ) : (
-                <Animated.View style={[styles.listContainer, { opacity: fadeAnim }]}>
-                    <FlatList
-                        data={livros}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={renderItem}
-                        contentContainerStyle={styles.listContent}
-                    />
-                </Animated.View>
-            )}
+            <FlatList
+                data={livros}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderItem}
+                contentContainerStyle={styles.listContent}
+                numColumns={2}
+                columnWrapperStyle={styles.row}
+                ListEmptyComponent={<Text>Nenhum livro disponível no momento.</Text>}
+            />
         </View>
     );
 }
@@ -96,35 +104,22 @@ export default function Home() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f9f9f9',
-        padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    welcomeText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    emptyText: {
-        fontSize: 18,
-        color: '#888',
-    },
-    listContainer: {
-        flex: 1,
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: '#1f2a44',
+        paddingHorizontal: 20,
+        paddingTop: 20,
     },
     listContent: {
-        paddingBottom: 20,
+        paddingBottom: 80,
+    },
+    row: {
+        justifyContent: 'space-between',
+        marginBottom: 20,
     },
     bookCard: {
         backgroundColor: '#fff',
         borderRadius: 10,
-        padding: 15,
-        marginVertical: 10,
-        width: '100%',
+        padding: 10,
+        width: '48%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -132,13 +127,36 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     bookTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 5,
+        textAlign: 'center',
     },
     bookImage: {
-        width: 100,
-        height: 150,
+        width: '100%',
+        height: 120,
+        resizeMode: 'contain',
         marginTop: 10,
+    },
+    noImageText: {
+        fontSize: 14,
+        fontStyle: 'italic',
+        color: '#888',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+    createButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 20,
+        justifyContent: 'center',
+    },
+    createButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        marginLeft: 10,
     },
 });
