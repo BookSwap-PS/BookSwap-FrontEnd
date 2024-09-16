@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@env';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 const EditProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [image, setImage] = useState(null); // Novo estado para a imagem
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +24,6 @@ const EditProfileScreen = ({ navigation }) => {
 
       if (!token) {
         console.log('Token não encontrado');
-        // Redirecione para a tela de login ou tome outra ação apropriada
         return;
       }
 
@@ -37,10 +40,12 @@ const EditProfileScreen = ({ navigation }) => {
       if (response.ok) {
         if (Array.isArray(data) && data.length > 0) {
           setProfile(data[0]);
-          const { usuario } = data[0];
+          const { usuario, image } = data[0];
           setFirstName(usuario.first_name);
           setLastName(usuario.last_name);
           setEmail(usuario.email);
+          setUsername(usuario.username);
+          setImage(image);  // Definindo a imagem existente do perfil
         } else {
           console.log('Nenhum dado de perfil encontrado');
         }
@@ -54,6 +59,28 @@ const EditProfileScreen = ({ navigation }) => {
     }
   };
 
+  const handleImagePick = async () => {
+    // Verifique se o dispositivo tem permissão para acessar a galeria
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão negada', 'Desculpe, precisamos de permissão para acessar suas fotos.');
+        return;
+      }
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.uri); // Define o caminho da imagem selecionada
+    }
+  };
+
   const handleSave = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -62,20 +89,38 @@ const EditProfileScreen = ({ navigation }) => {
         console.log('Token não encontrado');
         return;
       }
-  
-      const response = await fetch(`${API_BASE_URL}/usuario/${profile.usuario.id}/`, {
-        method: 'PATCH', // Alterado de 'PUT' para 'PATCH'
+
+      // Preparando os dados
+      const formData = new FormData();
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      formData.append('email', email);
+      formData.append('username', username);
+
+      if (password) {
+        formData.append('password', password);
+      }
+
+      if (image) {
+        const uriParts = image.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+
+        formData.append('image', {
+          uri: image,
+          name: `profile.${fileType}`,
+          type: `image/${fileType}`,
+        });
+      }
+
+      const response = await fetch(`${API_BASE_URL}/perfil/${profile.usuario.id}/`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-        }),
+        body: formData,
       });
-  
+
       if (response.ok) {
         Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
         navigation.goBack();
@@ -130,6 +175,25 @@ const EditProfileScreen = ({ navigation }) => {
         onChangeText={setEmail}
         keyboardType="email-address"
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Nome de usuário"
+        placeholderTextColor="#95a5a6"
+        value={username}
+        onChangeText={setUsername}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Nova Senha"
+        placeholderTextColor="#95a5a6"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <TouchableOpacity style={styles.imagePickerButton} onPress={handleImagePick}>
+        <Text style={styles.imagePickerButtonText}>Escolher Foto</Text>
+      </TouchableOpacity>
+      {image && <Image source={{ uri: image }} style={styles.profileImage} />}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>Salvar</Text>
       </TouchableOpacity>
@@ -174,6 +238,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize:18,
     fontWeight: 'bold',
+  },
+  imagePickerButton: {
+    backgroundColor: '#2980b9',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  imagePickerButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   noProfileText: {
     color: '#fff',

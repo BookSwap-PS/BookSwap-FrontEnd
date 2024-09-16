@@ -11,6 +11,7 @@ export default function LivroDetail({ route }) {
     const fetchLivroDetalhes = async () => {
         try {
             const token = await AsyncStorage.getItem('token'); // Obtém o token JWT armazenado
+            console.log(`${API_BASE_URL}/livro/`)
             const response = await fetch(`${API_BASE_URL}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {

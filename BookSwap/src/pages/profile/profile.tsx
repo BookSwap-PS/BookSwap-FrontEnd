@@ -20,7 +20,7 @@ const ProfileScreen = ({ navigation }) => {
         // Redirecione para a tela de login ou tome outra ação apropriada
         return;
       }
-
+      console.log(`${API_BASE_URL}/perfil/`)
       const response = await fetch(`${API_BASE_URL}/perfil/`, {
         method: 'GET',
         headers: {

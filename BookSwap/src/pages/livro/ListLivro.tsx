@@ -31,6 +31,7 @@ export default function ListLivro() {
 
     const fetchLivros = async () => {
         try {
+            
             const response = await fetch(`${API_BASE_URL}/livro/`);
             const data = await response.json();
             setLivros(data);

@@ -26,7 +26,7 @@ export default function Login() {
             Alert.alert("Erro", "Por favor, preencha todos os campos.");
             return;
         }
-
+        // console.log(`${API_BASE_URL}/login/`)
         try {
             const response = await fetch(`${API_BASE_URL}/login/`, {
                 method: 'POST',

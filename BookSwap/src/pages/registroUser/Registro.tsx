@@ -36,6 +36,7 @@ export default function Registro() {
         }
 
         try {
+            
             const response = await fetch(`${API_BASE_URL}/usuario/`, {
                 method: 'POST',
                 headers: {

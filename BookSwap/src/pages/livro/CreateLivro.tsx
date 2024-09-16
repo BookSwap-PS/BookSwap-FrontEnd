@@ -25,6 +25,7 @@ export default function CreateLivro() {
         }
 
         try {
+            
             const response = await fetch(`${API_BASE_URL}/livro/`, {
                 method: 'POST',
                 headers: {
