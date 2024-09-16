@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { API_BASE_URL } from '@env';
 import {
     View,
     Text,
+    StyleSheet,
     FlatList,
     Image,
     ActivityIndicator,
     TouchableOpacity,
-    Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { styles } from './styles'; 
 
 interface Livro {
     id: number;
@@ -29,7 +27,7 @@ interface Livro {
 export default function ListLivro() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation(); 
+    const navigation = useNavigation(); // Hook para navegação
 
     const fetchLivros = async () => {
         try {
@@ -47,19 +45,10 @@ export default function ListLivro() {
         fetchLivros();
     }, []);
 
-    const checkAuthAndNavigate = async () => {
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-            navigation.navigate('CreateLivro'); 
-        } else {
-            Alert.alert("Acesso negado", "Você precisa estar autenticado para criar um livro.");
-        }
-    };
-
     const renderItem = ({ item }: { item: Livro }) => (
         <TouchableOpacity 
             style={styles.bookCard} 
-            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
+            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })} // Navega para a tela de detalhes passando o ID
         >
             <Text style={styles.bookTitle}>{item.titulo}</Text>
             {item.capa ? (
@@ -69,6 +58,7 @@ export default function ListLivro() {
             )}
             <Text>Autor: {item.autor}</Text>
             <Text>Páginas: {item.paginas}</Text>
+            <Text>Editora: {item.editora}</Text>
         </TouchableOpacity>
     );
 
@@ -82,7 +72,6 @@ export default function ListLivro() {
 
     return (
         <View style={styles.container}>
-        
             <FlatList
                 data={livros}
                 keyExtractor={(item) => item.id.toString()}
@@ -95,3 +84,49 @@ export default function ListLivro() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#1f2a44',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
+    listContent: {
+        paddingBottom: 80,
+    },
+    row: {
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    bookCard: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 10,
+        width: '48%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    bookTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        textAlign: 'center',
+    },
+    bookImage: {
+        width: '100%',
+        height: 120,
+        resizeMode: 'contain',
+        marginTop: 10,
+    },
+    noImageText: {
+        fontSize: 14,
+        fontStyle: 'italic',
+        color: '#888',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+});

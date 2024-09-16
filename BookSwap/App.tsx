@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Login from './src/pages/login/Login';
 import Registro from './src/pages/registroUser/Registro';
 import LivroDetail from './src/pages/livro/LivroDetail';
-import BottomTabNavigator from './src/pages/BottomTabNavigator'; // Importa o Bottom Tab Navigator
+import BottomTabNavigator from './src/pages/BottomTabNavigator'; 
 
 const Stack = createStackNavigator();
 
@@ -12,19 +12,18 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
-        {/* Telas de autenticação */}
-        <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
-        <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro' }} />
+        
+        <Stack.Screen name="Login" component={Login} options={{ title: 'Login', headerShown: false }} />
+        <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false  }} />
 
-        {/* Telas principais com BottomTabNavigator */}
+        
         <Stack.Screen
           name="Main"
           component={BottomTabNavigator}
-          options={{ headerShown: false }} // Esconde o header no BottomTabNavigator
+          options={{ headerShown: false }} 
         />
 
-        {/* Tela de detalhes do livro */}
-        <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro' }} />
+        <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false  }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
