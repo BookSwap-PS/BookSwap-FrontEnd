@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useNavigation } from '@react-navigation/native'; // Importe o hook de navegação
 import { API_BASE_URL } from '@env';
+import { API_DEV_URL } from '@env';
 
 export default function Registro() {
     const navigation = useNavigation(); // Use o hook de navegação
@@ -50,6 +51,7 @@ export default function Registro() {
                     password: senha,
                 }),
             });
+            console.log(`${API_BASE_URL}/usuario/`)
 
             if (response.ok) {
                 Alert.alert("Sucesso", "Usuário cadastrado com sucesso!");

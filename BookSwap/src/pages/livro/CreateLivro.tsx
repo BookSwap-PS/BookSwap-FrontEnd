@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage para pegar o token
 import { API_BASE_URL } from '@env'; // Certifique-se de ter configurado seu arquivo .env com o API_BASE_URL
+import { API_DEV_URL } from '@env';
 
 export default function CreateLivro() {
     const [titulo, setTitulo] = useState('');
@@ -44,7 +45,7 @@ export default function CreateLivro() {
                     capa, // Se houver uma URL de capa
                 }),
             });
-
+            console.log(`${API_BASE_URL}/livro/`)
             const data = await response.json();
 
             if (response.ok) {

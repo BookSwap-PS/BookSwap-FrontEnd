@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +35,7 @@ const EditProfileScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
       });
+      console.log(`${API_BASE_URL}/perfil/`)
 
       const data = await response.json();
 

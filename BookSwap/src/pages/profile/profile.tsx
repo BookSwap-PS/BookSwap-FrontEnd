@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@env';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { API_DEV_URL } from '@env';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
 
   useEffect(() => {
     fetchProfileData();
@@ -17,10 +19,9 @@ const ProfileScreen = ({ navigation }) => {
 
       if (!token) {
         console.log('Token não encontrado');
-        // Redirecione para a tela de login ou tome outra ação apropriada
         return;
       }
-      console.log(`${API_BASE_URL}/perfil/`)
+
       const response = await fetch(`${API_BASE_URL}/perfil/`, {
         method: 'GET',
         headers: {
@@ -44,14 +45,21 @@ const ProfileScreen = ({ navigation }) => {
       console.log('Erro ao buscar dados do perfil:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false); // Finaliza o estado de "refresh"
     }
+  };
+
+  // Função chamada quando o usuário puxa para recarregar
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProfileData();
   };
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2c3e51" />
@@ -61,9 +69,14 @@ const ProfileScreen = ({ navigation }) => {
 
   if (!profile) {
     return (
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -71,7 +84,12 @@ const ProfileScreen = ({ navigation }) => {
   const { first_name, last_name, username, email } = usuario;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.header}>
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
@@ -92,21 +110,21 @@ const ProfileScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
         <Text style={styles.editButtonText}>Editar Perfil</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#2c3e51',
-    padding:16,
+    padding: 16,
   },
   loadingContainer: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#2c3e51',
-    alignItems:'center',
-    justifyContent:'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
@@ -124,22 +142,22 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     backgroundColor: '#34495e',
-    alignItems:'center',
-    justifyContent:'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   placeholderText: {
     color: '#fff',
     fontSize: 16,
   },
   name: {
-    fontSize:28,
-    fontWeight:'bold',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#fff',
-    marginTop:16,
+    marginTop: 16,
   },
   username: {
-    fontSize:20,
-    color:'#ecf0f1',
+    fontSize: 20,
+    color: '#ecf0f1',
     marginBottom: 8,
   },
   infoContainer: {
@@ -147,13 +165,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   email: {
-    fontSize:18,
-    color:'#ecf0f1',
+    fontSize: 18,
+    color: '#ecf0f1',
     marginBottom: 8,
   },
   following: {
-    fontSize:18,
-    color:'#ecf0f1',
+    fontSize: 18,
+    color: '#ecf0f1',
     marginBottom: 24,
   },
   editButton: {
@@ -165,7 +183,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: '#fff',
-    fontSize:18,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   noProfileText: {

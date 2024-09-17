@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { API_BASE_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import {
     View,
     Text,
@@ -36,6 +37,7 @@ export default function ListLivro() {
     const fetchLivros = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/livro/`);
+            console.log(`${API_BASE_URL}/livro`)
             const data = await response.json();
             setLivros(data);
         } catch (error) {

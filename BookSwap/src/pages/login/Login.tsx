@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native'; // Importe o hook de n
 import { style } from "./styles";
 import Logo from "../../assets/Logo.png";
 import { API_BASE_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -26,7 +27,7 @@ export default function Login() {
             Alert.alert("Erro", "Por favor, preencha todos os campos.");
             return;
         }
-        // console.log(`${API_BASE_URL}/login/`)
+        // console.log(`${API_DEV_URL}/login/`)
         try {
             const response = await fetch(`${API_BASE_URL}/login/`, {
                 method: 'POST',
