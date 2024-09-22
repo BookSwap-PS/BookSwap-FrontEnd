@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@env';
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +20,9 @@ const EditProfileScreen = ({ navigation }) => {
 
   const fetchProfileData = async () => {
     try {
+      console.log("prod: "+`${API_BASE_URL}/perfil/`)
+      console.log("dev: "+`${API_DEV_URL}/perfil/`)
+
       const token = await AsyncStorage.getItem('token');
 
       if (!token) {
@@ -28,14 +30,14 @@ const EditProfileScreen = ({ navigation }) => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/perfil/`, {
+      const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      console.log(`${API_BASE_URL}/perfil/`)
+
 
       const data = await response.json();
 

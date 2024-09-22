@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 import {
     View,
     Text,
@@ -56,7 +57,9 @@ export default function AdicionarLivro({ navigation }: any) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://10.10.31.132:8000/livro/', {
+            console.log("prod: "+`${API_BASE_URL}/livro/`)
+            console.log("dev: "+`${API_DEV_URL}/livro/`)
+            const response = await fetch(`${API_DEV_URL}/livro/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -72,7 +75,9 @@ export default function AdicionarLivro({ navigation }: any) {
                     capa: capa || null, // Se não houver capa, enviar null
                     dono: Number(userId), // ID do usuário autenticado
                 }),
+                
             });
+
 
             if (response.ok) {
                 Alert.alert('Sucesso', 'Livro criado com sucesso!');

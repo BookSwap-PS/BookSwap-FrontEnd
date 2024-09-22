@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '@env';
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 
 export default function LivroDetail({ route }) {
     const { livroId } = route.params; // Pega o ID passado pela navegação
@@ -12,15 +11,15 @@ export default function LivroDetail({ route }) {
     const fetchLivroDetalhes = async () => {
         try {
             const token = await AsyncStorage.getItem('token'); // Obtém o token JWT armazenado
-            console.log(`${API_BASE_URL}/livro/`)
-            const response = await fetch(`${API_BASE_URL}/livro/${livroId}/`, {
+            console.log("prod: "+`${API_BASE_URL}/livro/${livroId}/`)
+            console.log("dev: "+`${API_DEV_URL}/livro/${livroId}/`)
+            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,  // Inclui o token JWT no cabeçalho
                     'Content-Type': 'application/json',
                 },
             });
-            console.log(`${API_BASE_URL}/livro/${livroId}/`)
             const data = await response.json();
             setLivro(data);
         } catch (error) {

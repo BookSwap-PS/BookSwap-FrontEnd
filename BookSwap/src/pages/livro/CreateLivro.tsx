@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage para pegar o token
-import { API_BASE_URL } from '@env'; // Certifique-se de ter configurado seu arquivo .env com o API_BASE_URL
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 
 export default function CreateLivro() {
     const [titulo, setTitulo] = useState('');
@@ -26,8 +25,9 @@ export default function CreateLivro() {
         }
 
         try {
-            
-            const response = await fetch(`${API_BASE_URL}/livro/`, {
+            console.log("prod: "+`${API_BASE_URL}/livro/`)
+            console.log("dev: "+`${API_DEV_URL}/livro/`)
+            const response = await fetch(`${API_DEV_URL}/livro/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export default function CreateLivro() {
                     capa, // Se houver uma URL de capa
                 }),
             });
-            console.log(`${API_BASE_URL}/livro/`)
+
             const data = await response.json();
 
             if (response.ok) {

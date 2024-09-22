@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@env';
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -21,14 +20,17 @@ const ProfileScreen = ({ navigation }) => {
         console.log('Token não encontrado');
         return;
       }
+      console.log("prod: "+`${API_BASE_URL}/perfil/`)
+      console.log("dev: "+`${API_DEV_URL}/perfil/`)
 
-      const response = await fetch(`${API_BASE_URL}/perfil/`, {
+      const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
 
       const data = await response.json();
 

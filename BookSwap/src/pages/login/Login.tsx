@@ -29,7 +29,10 @@ export default function Login() {
         }
         // console.log(`${API_DEV_URL}/login/`)
         try {
-            const response = await fetch(`${API_BASE_URL}/login/`, {
+            console.log("prod: "+`${API_BASE_URL}/login/`)
+            console.log("dev: "+`${API_DEV_URL}/login/`)
+            
+            const response = await fetch(`${API_DEV_URL}/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -39,6 +42,7 @@ export default function Login() {
                     password: senha, 
                 }),
             });
+
 
             const data = await response.json();
             
