@@ -20,9 +20,6 @@ const EditProfileScreen = ({ navigation }) => {
 
   const fetchProfileData = async () => {
     try {
-      console.log("prod: "+`${API_BASE_URL}/perfil/`)
-      console.log("dev: "+`${API_DEV_URL}/perfil/`)
-
       const token = await AsyncStorage.getItem('token');
 
       if (!token) {
@@ -37,7 +34,6 @@ const EditProfileScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
       });
-
 
       const data = await response.json();
 
@@ -64,7 +60,6 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const handleImagePick = async () => {
-    // Verifique se o dispositivo tem permissão para acessar a galeria
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -88,13 +83,12 @@ const EditProfileScreen = ({ navigation }) => {
   const handleSave = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-  
+
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
 
-      // Preparando os dados
       const formData = new FormData();
       formData.append('first_name', firstName);
       formData.append('last_name', lastName);
@@ -116,11 +110,11 @@ const EditProfileScreen = ({ navigation }) => {
         });
       }
 
-      const response = await fetch(`${API_BASE_URL}/perfil/${profile.usuario.id}/`, {
+      // Enviar os dados sem definir manualmente o Content-Type
+      const response = await fetch(`${API_DEV_URL}/perfil/${profile.usuario.id}/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       });
