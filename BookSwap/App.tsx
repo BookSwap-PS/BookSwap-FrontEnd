@@ -6,6 +6,7 @@ import Registro from './src/pages/registroUser/Registro';
 import LivroDetail from './src/pages/livro/LivroDetail';
 import EditProfileScreen from './src/pages/profile/EditarProfileScreen';
 import BottomTabNavigator from './src/pages/BottomTabNavigator'; 
+import UserLibraryScreen from './src/pages/biblioteca/UserBiblioteca'; 
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
 
         <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false  }} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
+        <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'UserLibrary', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

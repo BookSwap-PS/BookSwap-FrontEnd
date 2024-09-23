@@ -20,8 +20,9 @@ const ProfileScreen = ({ navigation }) => {
         console.log('Token não encontrado');
         return;
       }
-      console.log("prod: "+`${API_BASE_URL}/perfil/`)
-      console.log("dev: "+`${API_DEV_URL}/perfil/`)
+
+      console.log("prod: " + `${API_BASE_URL}/perfil/`);
+      console.log("dev: " + `${API_DEV_URL}/perfil/`);
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -30,7 +31,6 @@ const ProfileScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
       });
-
 
       const data = await response.json();
 
@@ -58,7 +58,11 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile');
+    navigation.navigate('EditProfile'); // Navega para a tela de edição de perfil
+  };
+
+  const handleViewLibrary = () => {
+    navigation.navigate('UserLibrary'); // Navega para a tela de biblioteca
   };
 
   if (loading && !refreshing) {
@@ -109,8 +113,14 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
       </View>
 
+      {/* Botão para editar o perfil */}
       <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
         <Text style={styles.editButtonText}>Editar Perfil</Text>
+      </TouchableOpacity>
+
+      {/* Botão para ver a Biblioteca do usuário */}
+      <TouchableOpacity style={styles.libraryButton} onPress={handleViewLibrary}>
+        <Text style={styles.libraryButtonText}>Minha Biblioteca</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -182,8 +192,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignSelf: 'center',
+    marginBottom: 20,
   },
   editButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  libraryButton: {
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  libraryButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
