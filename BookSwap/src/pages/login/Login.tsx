@@ -55,7 +55,7 @@ export default function Login() {
             }
         } catch (error) {
             console.error("Erro:", error);
-            Alert.alert("Erro", "Ocorreu um erro ao se conectar ao servidor.");
+            Alert.alert("Erro", "Ocorreu um erro ao se conectar ao servidor."+ error);
         }
     };
 
