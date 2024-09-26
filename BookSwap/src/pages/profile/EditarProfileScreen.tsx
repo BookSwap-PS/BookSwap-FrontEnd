@@ -67,16 +67,22 @@ const EditProfileScreen = ({ navigation }) => {
         return;
       }
     }
-
+  
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled) {
-      setImage(result.uri); // Define o caminho da imagem selecionada
+  
+    console.log('Resultado do ImagePicker:', result); // Log completo do resultado
+  
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0].uri;  // Obtendo a URI da imagem do array assets
+      console.log('Imagem selecionada URI:', selectedImage); // Mostra a URI selecionada
+      setImage(selectedImage); // Define o caminho da imagem selecionada
+    } else {
+      console.log('Seleção de imagem foi cancelada ou URI não encontrada');
     }
   };
 
@@ -102,6 +108,7 @@ const EditProfileScreen = ({ navigation }) => {
       if (image) {
         const uriParts = image.split('.');
         const fileType = uriParts[uriParts.length - 1];
+        console.log('Enviando imagem com URI:', image, 'e tipo de arquivo:', fileType);
 
         formData.append('image', {
           uri: image,
@@ -110,7 +117,8 @@ const EditProfileScreen = ({ navigation }) => {
         });
       }
 
-      // Enviar os dados sem definir manualmente o Content-Type
+      console.log('FormData a ser enviado:', formData);
+
       const response = await fetch(`${API_DEV_URL}/perfil/${profile.usuario.id}/`, {
         method: 'PATCH',
         headers: {
