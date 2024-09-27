@@ -35,6 +35,11 @@ export default function Registro() {
             Alert.alert("Erro", "As senhas não coincidem.");
             return;
         }
+        
+        if (senha.length < 8) {
+            Alert.alert("Erro", "A senha deve conter pelo menos 8 caracteres.");
+            return;
+        }        
 
         try {
             console.log("prod: "+`${API_BASE_URL}/usuario/`)
@@ -120,19 +125,6 @@ export default function Registro() {
                     <Text style={styles.buttonText}>Cadastrar</Text>
                 </TouchableOpacity>
 
-                <View style={styles.separatorContainer}>
-                    <Text style={styles.separatorText}>Ou</Text>
-                </View>
-
-                <View style={styles.socialButtonsContainer}>
-                    <TouchableOpacity style={styles.socialButton}>
-                        {/* <Image source={require('../../assets/google.png')} style={styles.socialIcon} /> */}
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialButton}>
-                        {/* <Image source={require('../../assets/facebook.png')} style={styles.socialIcon} /> */}
-                    </TouchableOpacity>
-                </View>
-
                 <Text style={styles.loginText}>
                     Já tem uma conta?{' '}
                     <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
@@ -155,8 +147,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     logoContainer: {
+        marginTop: 40,
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 25,
     },
     logo: {
         width: 100,
