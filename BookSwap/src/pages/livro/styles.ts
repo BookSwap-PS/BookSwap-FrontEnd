@@ -82,4 +82,11 @@ export default StyleSheet.create({
         fontSize: 12,
         color: '#000',
     },
+    loadingIndicator: {
+        position: 'absolute',
+        top: 10,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    }   
 });

@@ -58,4 +58,21 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: 10,
     },
+    errorContainer: {
+        padding: 20,
+        backgroundColor: 'red',
+        marginBottom: 10,
+    },
+    errorText: {
+        color: 'white',
+        fontSize: 16,
+        textAlign: 'center',
+    },
+    loadingIndicator: {
+        position: 'absolute',
+        top: 10,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
 });

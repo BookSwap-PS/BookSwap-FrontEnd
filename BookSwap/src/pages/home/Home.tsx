@@ -12,9 +12,18 @@ import {
     RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';  // Import para tipagem
 import { styles } from './styles'; 
 
+// Defina as rotas do seu app
+type RootStackParamList = {
+    LivroDetail: { livroId: number };  // Rota e os parâmetros
+    // Adicione outras rotas se necessário
+};
+
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'LivroDetail'>;
+
+// Definição da interface Livro
 interface Livro {
     id: number;
     titulo: string;
@@ -31,24 +40,24 @@ export default function ListLivro() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const navigation = useNavigation(); 
+    const [error, setError] = useState<string | null>(null);
+    
+    const navigation = useNavigation<HomeScreenNavigationProp>(); // Tipagem correta para navegação
 
     const fetchLivros = async () => {
         try {
-            console.log("prod: "+`${API_BASE_URL}/livro/`)
-            console.log("dev: "+`${API_DEV_URL}/livro/`)
+            setError(null);
             const response = await fetch(`${API_DEV_URL}/livro/`);
             const data = await response.json();
             setLivros(data);
         } catch (error) {
             console.error('Erro ao buscar livros:', error);
+            setError('Erro ao buscar livros. Verifique sua conexão e tente novamente.');
         } finally {
             setLoading(false);
         }
     };
 
-
-    // Carrega os livros na montagem do componente
     React.useEffect(() => {
         fetchLivros();
     }, []);
@@ -59,19 +68,10 @@ export default function ListLivro() {
         setRefreshing(false);
     };
 
-    const checkAuthAndNavigate = async () => {
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-            navigation.navigate('CreateLivro'); 
-        } else {
-            Alert.alert("Acesso negado", "Você precisa estar autenticado para criar um livro.");
-        }
-    };
-
     const renderItem = ({ item }: { item: Livro }) => (
         <TouchableOpacity 
             style={styles.bookCard} 
-            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
+            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })} // Navegação corrigida
         >
             <Text style={styles.bookTitle}>{item.titulo}</Text>
             {item.capa ? (
@@ -84,7 +84,7 @@ export default function ListLivro() {
         </TouchableOpacity>
     );
 
-    if (loading) {
+    if (loading && !refreshing) {
         return (
             <View style={styles.container}>
                 <ActivityIndicator size="large" color="#0000ff" />
@@ -94,9 +94,15 @@ export default function ListLivro() {
 
     return (
         <View style={styles.container}>
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            )}
+
             <FlatList
                 data={livros}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item: Livro) => item.id.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
@@ -106,10 +112,16 @@ export default function ListLivro() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        colors={['#0000ff']}
+                        colors={['#f9f9f9']}
                     />
                 }
             />
+
+            {refreshing && (
+                <View style={styles.loadingIndicator}>
+                    <ActivityIndicator size="small" color="#2c3e51" />
+                </View>
+            )}
         </View>
     );
 }

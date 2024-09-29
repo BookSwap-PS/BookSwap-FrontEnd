@@ -1,18 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 
-export default function LivroDetail({ route }) {
+interface Livro {
+    titulo: string;
+    capa: string;
+    autor: string;
+    paginas: number;
+    editora: string;
+    descricao: string;
+    dataPublicacao: string;
+    genero: string;
+    condicao: string;
+    dono: string;
+}
+
+interface LivroDetailProps {
+    route: {
+        params: {
+            livroId: string;
+        };
+    };
+}
+
+export default function LivroDetail({ route }: LivroDetailProps) {
     const { livroId } = route.params; // Pega o ID passado pela navegação
-    const [livro, setLivro] = useState(null);
+    const [livro, setLivro] = useState<Livro | null>(null); // Tipo definido
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // Estado para controlar o refresh
 
     const fetchLivroDetalhes = async () => {
         try {
             const token = await AsyncStorage.getItem('token'); // Obtém o token JWT armazenado
-            console.log("prod: "+`${API_BASE_URL}/livro/${livroId}/`)
-            console.log("dev: "+`${API_DEV_URL}/livro/${livroId}/`)
             const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {
@@ -26,12 +46,18 @@ export default function LivroDetail({ route }) {
             console.error('Erro ao buscar detalhes do livro:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false); // Para de indicar que está atualizando
         }
     };
 
     useEffect(() => {
         fetchLivroDetalhes();
     }, []);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchLivroDetalhes(); // Chama a função de fetch quando o usuário puxa para atualizar
+    };
 
     if (loading) {
         return (
@@ -51,7 +77,16 @@ export default function LivroDetail({ route }) {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView 
+            contentContainerStyle={styles.container} 
+            refreshControl={
+                <RefreshControl 
+                    refreshing={refreshing} 
+                    onRefresh={onRefresh} 
+                    tintColor="#2c3e51" // Cor do refresh
+                />
+            }
+        >
             <Text style={styles.bookTitle}>{livro.titulo}</Text>
             {livro.capa ? (
                 <Image source={{ uri: livro.capa }} style={styles.bookImage} />
@@ -63,7 +98,7 @@ export default function LivroDetail({ route }) {
             <Text>Editora: {livro.editora}</Text>
             <Text>Descrição: {livro.descricao}</Text>
             <Text>Publicado em: {livro.dataPublicacao}</Text>
-            <Text>Genero: {livro.genero}</Text>
+            <Text>Gênero: {livro.genero}</Text>
             <Text>Condição: {livro.condicao}</Text>
             <Text>Dono: {livro.dono}</Text>
         </ScrollView>

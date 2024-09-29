@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_DEV_URL } from '@env'; // Use a URL correta para o desenvolvimento
+import { API_DEV_URL } from '@env';
 import {
     View,
     Text,
@@ -9,8 +9,17 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     TextInput,
+    RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+// Defina as rotas e parâmetros
+type RootStackParamList = {
+    LivroDetail: { livroId: number };
+};
+
+type ListLivroScreenNavigationProp = StackNavigationProp<RootStackParamList, 'LivroDetail'>;
 
 interface Livro {
     id: number;
@@ -27,15 +36,17 @@ interface Livro {
 export default function ListLivro() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState(''); // Estado para o termo de busca
-    const navigation = useNavigation();
+    const [refreshing, setRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    
+    const navigation = useNavigation<ListLivroScreenNavigationProp>();  // Use navegação tipada
 
     const fetchLivros = async (query: string = '') => {
         try {
             setLoading(true);
             let url = `${API_DEV_URL}/livro/`;
             if (query) {
-                url += `?search=${query}`; // Adiciona o termo de busca na query string
+                url += `?search=${query}`;
             }
             const response = await fetch(url);
             const data = await response.json();
@@ -47,16 +58,20 @@ export default function ListLivro() {
         }
     };
 
-    // Busca livros na montagem inicial
     useEffect(() => {
         fetchLivros();
     }, []);
 
-    // Função de renderização de item da lista
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchLivros();
+        setRefreshing(false);
+    };
+
     const renderItem = ({ item }: { item: Livro }) => (
         <TouchableOpacity
             style={styles.bookCard}
-            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
+            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}  // Navegação corrigida
         >
             <Text style={styles.bookTitle}>{item.titulo}</Text>
             {item.capa ? (
@@ -70,15 +85,14 @@ export default function ListLivro() {
         </TouchableOpacity>
     );
 
-    // Função que lida com a submissão do campo de busca
     const handleSearch = () => {
-        fetchLivros(searchQuery); // Realiza nova busca quando o botão é pressionado
+        fetchLivros(searchQuery);
     };
 
     if (loading) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator size="large" color="#0000ff" />
+                <ActivityIndicator size="large" color="#2c3e51" />
             </View>
         );
     }
@@ -91,8 +105,8 @@ export default function ListLivro() {
                     style={styles.searchInput}
                     placeholder="Buscar por título..."
                     value={searchQuery}
-                    onChangeText={(text) => setSearchQuery(text)} // Atualiza o estado conforme o usuário digita
-                    onSubmitEditing={handleSearch} // Busca quando o usuário pressiona Enter
+                    onChangeText={(text: string) => setSearchQuery(text)}
+                    onSubmitEditing={handleSearch}
                 />
                 <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
                     <Text style={styles.searchButtonText}>Buscar</Text>
@@ -102,12 +116,19 @@ export default function ListLivro() {
             {/* Lista de Livros */}
             <FlatList
                 data={livros}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item: Livro) => item.id.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={<Text>Nenhum livro disponível no momento.</Text>}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#f9f9f9']}
+                    />
+                }
             />
         </View>
     );

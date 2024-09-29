@@ -1,12 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StackNavigationProp } from '@react-navigation/stack';
 
-const ProfileScreen = ({ navigation }) => {
-  const [profile, setProfile] = useState(null);
+// Definindo suas rotas
+export type RootStackParamList = {
+  Profile: undefined;
+  EditProfile: undefined;
+};
+
+// Definindo o tipo para o usuário
+interface Usuario {
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+}
+
+// Definindo o tipo para o perfil
+interface Profile {
+  id: string;
+  usuario: Usuario;
+  image: string | null; // Pode ser uma string ou null
+  seguindo: any[];
+}
+
+// Tipagem da navegação
+type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
+
+interface Props {
+  navigation: ProfileScreenNavigationProp;
+}
+
+const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
+  const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -20,8 +51,6 @@ const ProfileScreen = ({ navigation }) => {
         console.log('Token não encontrado');
         return;
       }
-      console.log("prod: "+`${API_BASE_URL}/perfil/`)
-      console.log("dev: "+`${API_DEV_URL}/perfil/`)
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -31,27 +60,26 @@ const ProfileScreen = ({ navigation }) => {
         },
       });
 
-
       const data = await response.json();
 
       if (response.ok) {
         if (Array.isArray(data) && data.length > 0) {
           setProfile(data[0]);
+          setErrorMessage(null);
         } else {
-          console.log('Nenhum dado de perfil encontrado');
+          setErrorMessage('Nenhum dado de perfil encontrado');
         }
       } else {
-        console.log('Erro ao buscar dados do perfil:', data);
+        setErrorMessage('Erro ao buscar dados do perfil');
       }
     } catch (error) {
-      console.log('Erro ao buscar dados do perfil:', error);
+      setErrorMessage('Erro ao buscar dados do perfil');
     } finally {
       setLoading(false);
-      setRefreshing(false); // Finaliza o estado de "refresh"
+      setRefreshing(false);
     }
   };
 
-  // Função chamada quando o usuário puxa para recarregar
   const onRefresh = () => {
     setRefreshing(true);
     fetchProfileData();
@@ -69,53 +97,53 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  if (!profile) {
-    return (
-      <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
-      </ScrollView>
-    );
-  }
-
-  const { id, usuario, image, seguindo } = profile;
-  const { first_name, last_name, username, email } = usuario;
-
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#f9f9f9"
+          title={refreshing ? "Atualizando..." : ""}
+          titleColor="#2c3e51"
+        />
       }
     >
-      <View style={styles.header}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>Sem Imagem</Text>
+      {errorMessage && (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      )}
+      {!profile ? (
+        <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
+      ) : (
+        <>
+          <View style={styles.header}>
+            {profile.image ? (
+              <Image source={{ uri: profile.image }} style={styles.profileImage} />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <Text style={styles.placeholderText}>Sem Imagem</Text>
+              </View>
+            )}
+            <Text style={styles.name}>{profile.usuario.first_name} {profile.usuario.last_name}</Text>
+            <Text style={styles.username}>@{profile.usuario.username}</Text>
           </View>
-        )}
-        <Text style={styles.name}>{first_name} {last_name}</Text>
-        <Text style={styles.username}>@{username}</Text>
-      </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.email}>{email}</Text>
-        <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
-      </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.email}>{profile.usuario.email}</Text>
+            <Text style={styles.following}>Seguindo: {profile.seguindo.length}</Text>
+          </View>
 
-      <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-        <Text style={styles.editButtonText}>Editar Perfil</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+            <Text style={styles.editButtonText}>Editar Perfil</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </ScrollView>
   );
 };
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -124,9 +152,15 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#2c3e51',
+    backgroundColor: '#f9f9f9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   header: {
     alignItems: 'center',
@@ -191,6 +225,7 @@ const styles = StyleSheet.create({
   noProfileText: {
     color: '#fff',
     fontSize: 18,
+    textAlign: 'center',
   },
 });
 
