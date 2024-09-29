@@ -15,7 +15,7 @@ export default function CreateLivro() {
     const [paginas, setPaginas] = useState('');
     const [dataPublicacao, setDataPublicacao] = useState('');
     const [condicao, setCondicao] = useState('');
-    const [capa, setCapa] = useState(null);
+    const [capa, setCapa] = useState(null); // Estado para a imagem da capa
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleSave = async () => {
@@ -26,8 +26,6 @@ export default function CreateLivro() {
         }
 
         const formData = new FormData();
-
-        // Adiciona todos os campos de texto ao FormData
         formData.append('titulo', titulo);
         formData.append('autor', autor);
         formData.append('editora', editora);
@@ -37,15 +35,14 @@ export default function CreateLivro() {
         formData.append('dataPublicacao', dataPublicacao);
         formData.append('condicao', condicao);
 
-        // Adiciona a imagem da capa, se houver
+        // Adiciona a imagem da capa se houver
         if (capa) {
-            const filename = capa.split('/').pop(); // Obtém o nome do arquivo
-            const match = /\.(\w+)$/.exec(filename); // Extrai a extensão do arquivo
-            const ext = match ? match[1] : 'jpg'; // Usa jpg por padrão, se não encontrar
+            const uriParts = capa.split('.');
+            const fileType = uriParts[uriParts.length - 1];
             formData.append('capa', {
                 uri: capa,
-                name: `capa.${ext}`,
-                type: `image/${ext}`,
+                name: `capa.${fileType}`,
+                type: `image/${fileType}`,
             });
         }
 
@@ -53,14 +50,13 @@ export default function CreateLivro() {
             const response = await fetch(`${API_DEV_URL}/livro/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'multipart/form-data', // Necessário para upload de arquivos
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
                 },
                 body: formData,
             });
 
             const data = await response.json();
-
             if (response.ok) {
                 Alert.alert("Sucesso", "Livro criado com sucesso!");
                 setTitulo('');
@@ -87,27 +83,25 @@ export default function CreateLivro() {
         const day = currentDate.getDate().toString().padStart(2, '0');
         const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
         const year = currentDate.getFullYear();
-
         setDataPublicacao(`${day}-${month}-${year}`);
     };
 
     const pickImage = async () => {
-        let result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-        if (result.granted === false) {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
             Alert.alert("Permissão Necessária", "Você precisa permitir o acesso à galeria para selecionar uma imagem.");
             return;
         }
 
-        let pickerResult = await ImagePicker.launchImageLibraryAsync({
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
 
-        if (!pickerResult.cancelled) {
-            setCapa(pickerResult.uri);
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setCapa(result.assets[0].uri); // Define o caminho da imagem
         }
     };
 
@@ -256,11 +250,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     capaImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10,
-        marginTop: 15,
+        width: 200,
+        height: 300,
+        alignSelf: 'center',
         marginBottom: 15,
+        borderRadius: 10,
     },
     radioGroup: {
         flexDirection: 'row',
@@ -269,54 +263,52 @@ const styles = StyleSheet.create({
     },
     radioTitle: {
         color: '#fff',
+        fontSize: 18,
         fontWeight: 'bold',
     },
     radioButton: {
         padding: 10,
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: '#fff',
-    },
-    radioText: {
-        color: '#fff',
-        fontWeight: 'bold',
+        borderRadius: 10,
+        backgroundColor: '#fff',
     },
     novo: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#66ff66',
     },
     seminovo: {
-        backgroundColor: '#FFEB3B',
+        backgroundColor: '#ffff66',
     },
     usado: {
-        backgroundColor: '#F44336',
+        backgroundColor: '#ff6666',
+    },
+    radioText: {
+        fontWeight: 'bold',
+        color: '#1f2a44',
     },
     buttonGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 20,
     },
     cancelButton: {
-        backgroundColor: '#F08080',
+        backgroundColor: '#ff6666',
         padding: 15,
         borderRadius: 10,
-        width: '45%',
-        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
     },
     cancelButtonText: {
         color: '#fff',
+        textAlign: 'center',
         fontWeight: 'bold',
-        fontSize: 16,
     },
     saveButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#66ff66',
         padding: 15,
         borderRadius: 10,
-        width: '45%',
-        alignItems: 'center',
+        flex: 1,
     },
     saveButtonText: {
-        color: '#fff',
+        color: '#1f2a44',
+        textAlign: 'center',
         fontWeight: 'bold',
-        fontSize: 16,
     },
 });
