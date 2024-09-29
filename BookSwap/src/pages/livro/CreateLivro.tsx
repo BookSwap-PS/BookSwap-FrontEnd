@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage para pegar o token
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { API_BASE_URL, API_DEV_URL } from '@env';
 
 export default function CreateLivro() {
@@ -10,17 +10,22 @@ export default function CreateLivro() {
     const [editora, setEditora] = useState('');
     const [genero, setGenero] = useState('');
     const [descricao, setDescricao] = useState('');
-    const [paginas, setPaginas] = useState(''); // Campo para número de páginas
-    const [dataPublicacao, setDataPublicacao] = useState(''); // Campo para data de publicação
+    const [paginas, setPaginas] = useState(''); 
+    const [dataPublicacao, setDataPublicacao] = useState(''); 
     const [condicao, setCondicao] = useState('');
     const [capa, setCapa] = useState(null);
 
     const handleSave = async () => {
-        // Recupera o token JWT do AsyncStorage
         const token = await AsyncStorage.getItem('token');
-        
+
         if (!token) {
             Alert.alert("Erro", "Você precisa estar autenticado para adicionar um livro.");
+            return;
+        }
+
+        // Verifica se todos os campos foram preenchidos
+        if (!titulo || !autor || !editora || !genero || !descricao || !paginas || !dataPublicacao) {
+            Alert.alert("Erro", "Por favor, preencha todos os campos.");
             return;
         }
 
@@ -31,7 +36,7 @@ export default function CreateLivro() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Envia o token JWT no cabeçalho
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     titulo,
@@ -39,14 +44,15 @@ export default function CreateLivro() {
                     editora,
                     genero,
                     descricao,
-                    paginas: parseInt(paginas), // Envia o número de páginas como inteiro
-                    dataPublicacao, // Envia a data de publicação
+                    paginas: parseInt(paginas),
+                    dataPublicacao,
                     condicao,
-                    capa, // Se houver uma URL de capa
+                    capa,
                 }),
             });
 
             const data = await response.json();
+            console.log(data); // Exibe a resposta da API para verificação
 
             if (response.ok) {
                 Alert.alert("Sucesso", "Livro criado com sucesso!");
@@ -56,17 +62,21 @@ export default function CreateLivro() {
                 setEditora('');
                 setGenero('');
                 setDescricao('');
-                setPaginas(''); // Limpa o campo de páginas
-                setDataPublicacao(''); // Limpa o campo de data de publicação
+                setPaginas('');
+                setDataPublicacao('');
                 setCondicao('');
                 setCapa(null);
             } else {
                 // Exibe mensagens de erro retornadas pela API
-                Alert.alert("Erro", data.detail || JSON.stringify(data));
+                Alert.alert("Erro", data.detail || "Erro desconhecido.");
             }
-        } catch (error) {
-            // Exibe erro de rede ou qualquer outro problema
-            Alert.alert("Erro", `Erro ao criar o livro: ${error.message}`);
+        } catch (error: unknown) {
+            // Verifica se o erro é uma instância de Error
+            if (error instanceof Error) {
+                Alert.alert("Erro", `Erro ao criar o livro: ${error.message}`);
+            } else {
+                Alert.alert("Erro", "Ocorreu um erro desconhecido.");
+            }
         }
     };
 
@@ -226,7 +236,7 @@ const styles = StyleSheet.create({
     buttonGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 20,  // Adiciona margem superior para garantir espaçamento entre os botões e o restante
+        marginTop: 20,
     },
     cancelButton: {
         backgroundColor: '#F08080',

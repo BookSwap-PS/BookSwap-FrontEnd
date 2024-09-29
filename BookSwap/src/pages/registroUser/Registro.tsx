@@ -10,21 +10,21 @@ import {
     KeyboardAvoidingView,
     ScrollView
 } from "react-native";
-import { useNavigation } from '@react-navigation/native'; // Importe o hook de navegação
+import { useNavigation } from '@react-navigation/native';
 import { API_BASE_URL, API_DEV_URL } from '@env';
-
+import { NavigationProp } from '@react-navigation/native'; // Importar NavigationProp
 
 export default function Registro() {
-    const navigation = useNavigation(); // Use o hook de navegação
+    // Definindo a navegação com o tipo correto
+    const navigation = useNavigation<NavigationProp<any>>();
 
-    const [nome, setNome] = useState("");
-    const [ultimoNome, setUltimoNome] = useState("");
-    const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
-    const [senha, setSenha] = useState("");
-    const [confirmarSenha, setConfirmarSenha] = useState("");
+    const [nome, setNome] = useState<string>("");
+    const [ultimoNome, setUltimoNome] = useState<string>("");
+    const [username, setUsername] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [senha, setSenha] = useState<string>("");
+    const [confirmarSenha, setConfirmarSenha] = useState<string>("");
 
-    // Função para lidar com o cadastro de usuário
     const handleRegister = async () => {
         if (!nome || !ultimoNome || !username || !email || !senha || !confirmarSenha) {
             Alert.alert("Erro", "Todos os campos são obrigatórios.");
@@ -37,10 +37,9 @@ export default function Registro() {
         }
 
         try {
-            console.log("prod: "+`${API_BASE_URL}/usuario/`)
-            console.log("dev: "+`${API_DEV_URL}/usuario/`)
+            console.log("prod: " + `${API_BASE_URL}/usuario/`);
+            console.log("dev: " + `${API_DEV_URL}/usuario/`);
 
-            
             const response = await fetch(`${API_DEV_URL}/usuario/`, {
                 method: 'POST',
                 headers: {
@@ -54,7 +53,6 @@ export default function Registro() {
                     password: senha,
                 }),
             });
-
 
             if (response.ok) {
                 Alert.alert("Sucesso", "Usuário cadastrado com sucesso!");

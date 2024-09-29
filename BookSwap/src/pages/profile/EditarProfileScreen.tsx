@@ -3,15 +3,20 @@ import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { StackNavigationProp } from '@react-navigation/stack';
 
-const EditProfileScreen = ({ navigation }) => {
-  const [profile, setProfile] = useState(null);
+interface Props {
+  navigation: StackNavigationProp<any>; // Especificando o tipo de navigation
+}
+
+const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const [profile, setProfile] = useState<any | null>(null); // Especificando o tipo
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [image, setImage] = useState(null); // Novo estado para a imagem
+  const [image, setImage] = useState<string | null>(null); // O tipo da imagem
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +50,7 @@ const EditProfileScreen = ({ navigation }) => {
           setLastName(usuario.last_name);
           setEmail(usuario.email);
           setUsername(usuario.username);
-          setImage(image);  // Definindo a imagem existente do perfil
+          setImage(image);
         } else {
           console.log('Nenhum dado de perfil encontrado');
         }
@@ -76,7 +81,7 @@ const EditProfileScreen = ({ navigation }) => {
     });
 
     if (!result.canceled) {
-      setImage(result.uri); // Define o caminho da imagem selecionada
+      setImage(result.assets[0].uri);
     }
   };
 
@@ -107,28 +112,30 @@ const EditProfileScreen = ({ navigation }) => {
           uri: image,
           name: `profile.${fileType}`,
           type: `image/${fileType}`,
-        });
+        } as any);
       }
 
-      // Enviar os dados sem definir manualmente o Content-Type
-      const response = await fetch(`${API_DEV_URL}/perfil/${profile.usuario.id}/`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      if (profile) {
+        const response = await fetch(`${API_DEV_URL}/perfil/${profile.usuario.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-      if (response.ok) {
-        Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
-        navigation.goBack();
-      } else {
-        const data = await response.json();
-        console.log('Erro ao atualizar perfil:', data);
-        Alert.alert('Erro', 'Não foi possível atualizar o perfil');
+        if (response.ok) {
+          Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
+          navigation.goBack();
+        } else {
+          const data = await response.json();
+          console.log('Erro ao atualizar perfil:', data);
+          Alert.alert('Erro', 'Não foi possível atualizar o perfil');
+        }
       }
     } catch (error) {
       console.log('Erro ao atualizar perfil:', error);
+      Alert.alert('Erro', `Erro ao atualizar perfil: ${(error as Error).message}`);
     }
   };
 
@@ -201,30 +208,30 @@ const EditProfileScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#2c3e51',
-    padding:16,
+    padding: 16,
     justifyContent: 'center',
   },
   loadingContainer: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#2c3e51',
-    alignItems:'center',
-    justifyContent:'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize:28,
-    fontWeight:'bold',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#fff',
-    marginBottom:24,
+    marginBottom: 24,
     textAlign: 'center',
   },
   input: {
     backgroundColor: '#34495e',
     color: '#fff',
-    padding:12,
-    marginBottom:16,
-    borderRadius:8,
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 8,
   },
   saveButton: {
     backgroundColor: '#2980b9',
@@ -234,7 +241,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
-    fontSize:18,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   imagePickerButton: {
@@ -246,7 +253,6 @@ const styles = StyleSheet.create({
   },
   imagePickerButtonText: {
     color: '#fff',
-    fontSize: 18,
     fontWeight: 'bold',
   },
   profileImage: {

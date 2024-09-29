@@ -1,16 +1,22 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import Home from './home/Home';
 import ListLivro from './livro/ListLivro';
 import CreateLivro from './livro/CreateLivro';
 import Perfil from './profile/profile';
 import configuracoes from './configuracoes/configuracoes';
+import { GestureResponderEvent } from 'react-native'; // Importação necessária
 
 const Tab = createBottomTabNavigator();
 
-function CustomSearchButton({ children, onPress }) {
+interface CustomSearchButtonProps {
+  children: React.ReactNode;
+  onPress: (event: GestureResponderEvent) => void; // Altere o tipo para GestureResponderEvent
+}
+
+function CustomSearchButton({ children, onPress }: CustomSearchButtonProps) {
   return (
     <TouchableOpacity
       style={{
@@ -19,7 +25,7 @@ function CustomSearchButton({ children, onPress }) {
         alignItems: 'center',
         ...styles.shadow,
       }}
-      onPress={onPress}
+      onPress={onPress} // Passa a função onPress diretamente
     >
       <View
         style={{
@@ -42,7 +48,8 @@ export default function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          let iconName: keyof typeof Ionicons.glyphMap;
+
           switch (route.name) {
             case 'Início':
               iconName = focused ? 'home' : 'home-outline';
@@ -56,6 +63,11 @@ export default function BottomTabNavigator() {
             case 'Configurações':
               iconName = focused ? 'settings' : 'settings-outline';
               break;
+            case 'Buscar':
+              iconName = focused ? 'search' : 'search-outline';
+              break;
+            default:
+              iconName = 'home-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -73,20 +85,25 @@ export default function BottomTabNavigator() {
     >
       <Tab.Screen name="Início" component={Home} />
       <Tab.Screen name="Adicionar" component={CreateLivro} />
-      
+
       {/* Central search button */}
       <Tab.Screen
         name="Buscar"
-        component={ListLivro} // Substituir pelo componente desejado
+        component={ListLivro}
         options={{
           tabBarButton: (props) => (
-            <CustomSearchButton {...props}>
+            <CustomSearchButton
+              {...props}
+              onPress={(event) => {
+                props.onPress?.(event); // Chama a função se existir
+              }}
+            >
               <Ionicons name="search" size={30} color="white" />
             </CustomSearchButton>
           ),
         }}
       />
-      
+
       <Tab.Screen name="Perfil" component={Perfil} />
       <Tab.Screen name="Configurações" component={configuracoes} />
     </Tab.Navigator>

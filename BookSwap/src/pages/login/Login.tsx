@@ -6,32 +6,42 @@ import {
     TextInput,
     TouchableOpacity,
     Alert,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importe o hook de navegação
+import { useNavigation } from '@react-navigation/native'; 
 import { style } from "./styles";
 import Logo from "../../assets/Logo.png";
 import { API_BASE_URL } from '@env';
 import { API_DEV_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StackNavigationProp } from '@react-navigation/stack';
 
+// Definição de tipos para as rotas de navegação
+type RootStackParamList = {
+    Login: undefined;      // Rota de Login
+    Main: undefined;
+    Registro: undefined;
+    // Adicione outras rotas conforme necessário
+};
+
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 export default function Login() {
-    const navigation = useNavigation(); 
+    const navigation = useNavigation<LoginScreenNavigationProp>(); // Adicionando a tipagem de navegação
 
-    const [usuario, setUsuario] = useState("");
-    const [senha, setSenha] = useState("");
+    const [usuario, setUsuario] = useState<string>(""); // Tipando o estado
+    const [senha, setSenha] = useState<string>(""); // Tipando o estado
 
     const handleLogin = async () => {
         if (!usuario || !senha) {
             Alert.alert("Erro", "Por favor, preencha todos os campos.");
             return;
         }
-        // console.log(`${API_DEV_URL}/login/`)
+
         try {
-            console.log("prod: "+`${API_BASE_URL}/login/`)
-            console.log("dev: "+`${API_DEV_URL}/login/`)
-            
+            console.log("prod: " + `${API_BASE_URL}/login/`);
+            console.log("dev: " + `${API_DEV_URL}/login/`);
+
             const response = await fetch(`${API_DEV_URL}/login/`, {
                 method: 'POST',
                 headers: {
@@ -42,7 +52,6 @@ export default function Login() {
                     password: senha, 
                 }),
             });
-
 
             const data = await response.json();
             
@@ -74,16 +83,16 @@ export default function Login() {
                 <TextInput
                     style={style.input}
                     placeholder="Digite aqui seu usuário"
-                    value={usuario} // Valor do estado "usuario"
-                    onChangeText={setUsuario} // Atualizar o estado quando o texto mudar
+                    value={usuario}
+                    onChangeText={setUsuario} 
                 />
                 <Text style={style.label}>Senha</Text>
                 <TextInput
                     style={style.input}
                     placeholder="Digite aqui sua senha"
                     secureTextEntry={true}
-                    value={senha} // Valor do estado "senha"
-                    onChangeText={setSenha} // Atualizar o estado quando o texto mudar
+                    value={senha}
+                    onChangeText={setSenha} 
                 />
 
                 <Text style={style.linkText}>Esqueceu sua senha?</Text>
@@ -98,7 +107,7 @@ export default function Login() {
                     Não tem uma conta?{' '}
                     <Text 
                         style={style.linkText} 
-                        onPress={() => navigation.navigate('Registro')} // Navega para a página de cadastro
+                        onPress={() => navigation.navigate('Registro')} 
                     >
                         Cadastre-se
                     </Text>
