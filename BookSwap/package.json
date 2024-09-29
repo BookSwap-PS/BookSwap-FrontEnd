@@ -9,11 +9,13 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "^2.0.0",  // Usando a versão mais recente
+    "@react-native-community/datetimepicker": "8.0.1",      // Esta dependência vem da branch develop
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
+    "date-fns": "^4.1.0",
     "expo": "~51.0.28",
     "expo-image-picker": "~15.0.7",
     "expo-status-bar": "~1.12.1",

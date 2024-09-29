@@ -8,7 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 export type RootStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
-  UserLibrary: undefined; // Adicionei a rota para a Biblioteca do usuário
+  UserLibrary: undefined;
 };
 
 // Definindo o tipo para o usuário
@@ -23,7 +23,7 @@ interface Usuario {
 interface Profile {
   id: string;
   usuario: Usuario;
-  image: string | null; // Pode ser uma string ou null
+  image: string | null;
   seguindo: any[];
 }
 
@@ -52,6 +52,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
         console.log('Token não encontrado');
         return;
       }
+
+      console.log("prod: " + `${API_BASE_URL}/perfil/`);
+      console.log("dev: " + `${API_DEV_URL}/perfil/`);
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -87,11 +90,11 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile'); // Navega para a tela de edição de perfil
+    navigation.navigate('EditProfile');
   };
 
   const handleViewLibrary = () => {
-    navigation.navigate('UserLibrary'); // Navega para a tela de biblioteca
+    navigation.navigate('UserLibrary');
   };
 
   if (loading && !refreshing) {

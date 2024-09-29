@@ -26,7 +26,7 @@ function CustomSearchButton({ children, onPress }) {
           width: 70,
           height: 70,
           borderRadius: 35,
-          backgroundColor: '#375E87', // Cor azul do botão central
+          backgroundColor: '#FF6347', // Cor azul do botão central
           justifyContent: 'center', // Alinha verticalmente
           alignItems: 'center', // Alinha horizontalmente
         }}
@@ -59,7 +59,7 @@ export default function BottomTabNavigator() {
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#375E87',
+        tabBarActiveTintColor: '#FF6347',
         tabBarInactiveTintColor: 'gray',
         tabBarLabelStyle: {
           fontSize: 12,
@@ -71,8 +71,8 @@ export default function BottomTabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Início" component={Home} />
-      <Tab.Screen name="Adicionar" component={CreateLivro} />
+      <Tab.Screen name="Início" component={Home} options={{headerShown: false}} />
+      <Tab.Screen name="Adicionar" component={CreateLivro} options={{headerShown: false}} />
       
       {/* Central search button */}
       <Tab.Screen
@@ -84,11 +84,12 @@ export default function BottomTabNavigator() {
               <Ionicons name="search" size={30} color="white" />
             </CustomSearchButton>
           ),
+          headerShown: false
         }}
       />
       
-      <Tab.Screen name="Perfil" component={Perfil} />
-      <Tab.Screen name="Configurações" component={configuracoes} />
+      <Tab.Screen name="Perfil" component={Perfil} options={{headerShown: false}}  />
+      <Tab.Screen name="Configurações" component={configuracoes} options={{headerShown: false}} />
     </Tab.Navigator>
   );
 }

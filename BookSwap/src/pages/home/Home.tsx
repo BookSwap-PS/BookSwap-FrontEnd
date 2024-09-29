@@ -63,6 +63,12 @@ export default function ListLivro() {
         fetchLivros();
     }, []);
 
+    React.useEffect(() => {
+        navigation.setOptions({
+            headerShown: false, 
+        });
+    }, [navigation]);
+
     const onRefresh = async () => {
         setRefreshing(true);
         await fetchLivros();
