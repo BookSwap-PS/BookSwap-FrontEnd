@@ -12,6 +12,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';  // Import para tipagem
 import { styles } from './styles'; 
 
@@ -61,6 +62,12 @@ export default function ListLivro() {
     React.useEffect(() => {
         fetchLivros();
     }, []);
+
+    React.useEffect(() => {
+        navigation.setOptions({
+            headerShown: false, 
+        });
+    }, [navigation]);
 
     const onRefresh = async () => {
         setRefreshing(true);

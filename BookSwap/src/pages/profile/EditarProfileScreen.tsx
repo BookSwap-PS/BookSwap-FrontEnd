@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 interface Props {
-  navigation: StackNavigationProp<any>; // Especificando o tipo de navigation
+  navigation: StackNavigationProp<any>;
 }
 
 const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
-  const [profile, setProfile] = useState<any | null>(null); // Especificando o tipo
+  const [profile, setProfile] = useState<any | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [image, setImage] = useState<string | null>(null); // O tipo da imagem
+  const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,8 +80,12 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
       quality: 1,
     });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0].uri; 
+      console.log('Imagem selecionada URI:', selectedImage);
+      setImage(selectedImage);
+    } else {
+      console.log('Seleção de imagem foi cancelada ou URI não encontrada');
     }
   };
 
@@ -107,6 +111,7 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
       if (image) {
         const uriParts = image.split('.');
         const fileType = uriParts[uriParts.length - 1];
+        console.log('Enviando imagem com URI:', image, 'e tipo de arquivo:', fileType);
 
         formData.append('image', {
           uri: image,

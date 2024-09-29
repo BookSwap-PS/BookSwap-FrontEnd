@@ -5,23 +5,30 @@ import Login from './src/pages/login/Login';
 import Registro from './src/pages/registroUser/Registro';
 import LivroDetail from './src/pages/livro/LivroDetail';
 import EditProfileScreen from './src/pages/profile/EditarProfileScreen';
-import BottomTabNavigator from './src/pages/BottomTabNavigator'; 
+import BottomTabNavigator from './src/pages/BottomTabNavigator';
+import UserBiblioteca from './src/pages/biblioteca/UserBiblioteca'; // Corrigido para UserBiblioteca
 
-const Stack = createStackNavigator();
+export type RootStackParamList = {
+  Login: undefined; 
+  Registro: undefined; 
+  Main: undefined; 
+  LivroDetail: { livroId: number }; 
+  EditProfile: undefined;
+  UserBiblioteca: undefined; // Corrigido para UserBiblioteca
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
-        
         <Stack.Screen name="Login" component={Login} options={{ title: 'Login', headerShown: false }} />
-        <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false  }} />
-
-        
+        <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false }} />
         <Stack.Screen name="Main" component={BottomTabNavigator} options={{ title: 'Inicio', headerShown: false }} />
-
-        <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false  }} />
+        <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false }} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
+        <Stack.Screen name="UserBiblioteca" component={UserBiblioteca} options={{ title: 'Biblioteca', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

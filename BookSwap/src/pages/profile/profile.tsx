@@ -8,6 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 export type RootStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  UserLibrary: undefined;
 };
 
 // Definindo o tipo para o usuário
@@ -22,7 +23,7 @@ interface Usuario {
 interface Profile {
   id: string;
   usuario: Usuario;
-  image: string | null; // Pode ser uma string ou null
+  image: string | null;
   seguindo: any[];
 }
 
@@ -51,6 +52,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
         console.log('Token não encontrado');
         return;
       }
+
+      console.log("prod: " + `${API_BASE_URL}/perfil/`);
+      console.log("dev: " + `${API_DEV_URL}/perfil/`);
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -87,6 +91,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
+  };
+
+  const handleViewLibrary = () => {
+    navigation.navigate('UserLibrary');
   };
 
   if (loading && !refreshing) {
@@ -134,8 +142,14 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
             <Text style={styles.following}>Seguindo: {profile.seguindo.length}</Text>
           </View>
 
+          {/* Botão para editar o perfil */}
           <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
             <Text style={styles.editButtonText}>Editar Perfil</Text>
+          </TouchableOpacity>
+
+          {/* Botão para ver a Biblioteca do usuário */}
+          <TouchableOpacity style={styles.libraryButton} onPress={handleViewLibrary}>
+            <Text style={styles.libraryButtonText}>Minha Biblioteca</Text>
           </TouchableOpacity>
         </>
       )}
@@ -147,7 +161,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2c3e51',
+    backgroundColor: '#1f2a44',
     padding: 16,
   },
   loadingContainer: {
@@ -216,8 +230,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignSelf: 'center',
+    marginBottom: 20,
   },
   editButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  libraryButton: {
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  libraryButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',

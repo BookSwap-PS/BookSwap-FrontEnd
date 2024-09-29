@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL, API_DEV_URL } from '@env';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CreateLivro() {
     const [titulo, setTitulo] = useState('');
@@ -10,73 +12,87 @@ export default function CreateLivro() {
     const [editora, setEditora] = useState('');
     const [genero, setGenero] = useState('');
     const [descricao, setDescricao] = useState('');
-    const [paginas, setPaginas] = useState(''); 
-    const [dataPublicacao, setDataPublicacao] = useState(''); 
+    const [paginas, setPaginas] = useState('');
+    const [dataPublicacao, setDataPublicacao] = useState<string | null>(null);
     const [condicao, setCondicao] = useState('');
-    const [capa, setCapa] = useState(null);
+    const [capa, setCapa] = useState<string | null>(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleSave = async () => {
         const token = await AsyncStorage.getItem('token');
-
         if (!token) {
             Alert.alert("Erro", "Você precisa estar autenticado para adicionar um livro.");
             return;
         }
 
-        // Verifica se todos os campos foram preenchidos
-        if (!titulo || !autor || !editora || !genero || !descricao || !paginas || !dataPublicacao) {
-            Alert.alert("Erro", "Por favor, preencha todos os campos.");
-            return;
+        const formData = new FormData();
+        formData.append('titulo', titulo);
+        formData.append('autor', autor);
+        formData.append('editora', editora);
+        formData.append('genero', genero);
+        formData.append('descricao', descricao);
+        formData.append('paginas', paginas);
+        formData.append('dataPublicacao', dataPublicacao || '');
+
+        if (capa) {
+            const uriParts = capa.split('.');
+            const fileType = uriParts[uriParts.length - 1];
+            formData.append('capa', {
+                uri: capa,
+                name: `capa.${fileType}`,
+                type: `image/${fileType}`,
+            } as any); // Ajuste aqui
         }
 
         try {
-            console.log("prod: "+`${API_BASE_URL}/livro/`)
-            console.log("dev: "+`${API_DEV_URL}/livro/`)
             const response = await fetch(`${API_DEV_URL}/livro/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: JSON.stringify({
-                    titulo,
-                    autor,
-                    editora,
-                    genero,
-                    descricao,
-                    paginas: parseInt(paginas),
-                    dataPublicacao,
-                    condicao,
-                    capa,
-                }),
+                body: formData,
             });
 
             const data = await response.json();
-            console.log(data); // Exibe a resposta da API para verificação
-
             if (response.ok) {
                 Alert.alert("Sucesso", "Livro criado com sucesso!");
-                // Limpa os campos após o sucesso
-                setTitulo('');
-                setAutor('');
-                setEditora('');
-                setGenero('');
-                setDescricao('');
-                setPaginas('');
-                setDataPublicacao('');
-                setCondicao('');
-                setCapa(null);
+                // Resetar os campos
             } else {
-                // Exibe mensagens de erro retornadas pela API
-                Alert.alert("Erro", data.detail || "Erro desconhecido.");
+                Alert.alert("Erro", data.detail || JSON.stringify(data));
             }
-        } catch (error: unknown) {
-            // Verifica se o erro é uma instância de Error
-            if (error instanceof Error) {
-                Alert.alert("Erro", `Erro ao criar o livro: ${error.message}`);
-            } else {
-                Alert.alert("Erro", "Ocorreu um erro desconhecido.");
-            }
+        } catch (error) {
+            const errorMessage = (error as Error).message; // Aqui
+            Alert.alert("Erro", `Erro ao criar o livro: ${errorMessage}`);
+        }
+    };
+
+    const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+        const currentDate = selectedDate || new Date();
+        setShowDatePicker(Platform.OS === 'ios');
+
+        const day = currentDate.getDate().toString().padStart(2, '0');
+        const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = currentDate.getFullYear();
+        setDataPublicacao(`${day}-${month}-${year}`);
+    };
+
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Permissão Necessária", "Você precisa permitir o acesso à galeria para selecionar uma imagem.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setCapa(result.assets[0].uri);
         }
     };
 
@@ -85,80 +101,86 @@ export default function CreateLivro() {
             <View style={styles.container}>
                 <Text style={styles.headerTitle}>Adicionar Livro</Text>
                 <Ionicons name="book-outline" size={60} color="#fff" style={styles.bookIcon} />
-                
-                {/* Campos de texto */}
+
                 <TextInput
                     style={styles.input}
                     placeholder="Título do livro"
-                    placeholderTextColor="#b0c4de"
+                    placeholderTextColor="#a6a2a2"
                     value={titulo}
                     onChangeText={setTitulo}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Autor"
-                    placeholderTextColor="#b0c4de"
+                    placeholderTextColor="#a6a2a2"
                     value={autor}
                     onChangeText={setAutor}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Editora"
-                    placeholderTextColor="#b0c4de"
+                    placeholderTextColor="#a6a2a2"
                     value={editora}
                     onChangeText={setEditora}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Gênero"
-                    placeholderTextColor="#b0c4de"
+                    placeholderTextColor="#a6a2a2"
                     value={genero}
                     onChangeText={setGenero}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Número de páginas"
-                    placeholderTextColor="#b0c4de"
-                    keyboardType="numeric" // Define o teclado numérico
+                    placeholderTextColor="#a6a2a2"
+                    keyboardType="numeric"
                     value={paginas}
                     onChangeText={setPaginas}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Data de Publicação (YYYY-MM-DD)"
-                    placeholderTextColor="#b0c4de"
-                    value={dataPublicacao}
-                    onChangeText={setDataPublicacao}
-                />
+
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+                    <Text style={{ color: dataPublicacao ? '#000' : '#a6a2a2' }}>
+                        {dataPublicacao || 'Data de Publicação (DD-MM-YYYY)'}
+                    </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                    <DateTimePicker
+                        value={new Date()}
+                        mode="date"
+                        display="default"
+                        onChange={handleDateChange}
+                    />
+                )}
+
                 <TextInput
                     style={styles.input}
                     placeholder="Descrição"
-                    placeholderTextColor="#b0c4de"
+                    placeholderTextColor="#a6a2a2"
                     value={descricao}
                     onChangeText={setDescricao}
                 />
 
-                {/* Botão para adicionar capa */}
-                <TouchableOpacity style={styles.uploadButton}>
+                <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
                     <Ionicons name="image-outline" size={24} color="#1f2a44" />
                     <Text style={styles.uploadButtonText}>Adicionar capa do livro</Text>
                 </TouchableOpacity>
 
-                {/* Escolha de Condição */}
+                {capa && <Image source={{ uri: capa }} style={styles.capaImage} />}
+
                 <View style={styles.radioGroup}>
                     <Text style={styles.radioTitle}>Condição:</Text>
-                    <TouchableOpacity onPress={() => setCondicao('novo')}>
-                        <Text style={[styles.radioButton, condicao === 'novo' && styles.radioSelected]}>Novo</Text>
+                    <TouchableOpacity onPress={() => setCondicao('novo')} style={[styles.radioButton, condicao === 'novo' && styles.novo]}>
+                        <Text style={styles.radioText}>Novo</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setCondicao('seminovo')}>
-                        <Text style={[styles.radioButton, condicao === 'seminovo' && styles.radioSelected]}>Seminovo</Text>
+                    <TouchableOpacity onPress={() => setCondicao('seminovo')} style={[styles.radioButton, condicao === 'seminovo' && styles.seminovo]}>
+                        <Text style={styles.radioText}>Seminovo</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setCondicao('usado')}>
-                        <Text style={[styles.radioButton, condicao === 'usado' && styles.radioSelected]}>Usado</Text>
+                    <TouchableOpacity onPress={() => setCondicao('usado')} style={[styles.radioButton, condicao === 'usado' && styles.usado]}>
+                        <Text style={styles.radioText}>Usado</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Botões de Ação */}
                 <View style={styles.buttonGroup}>
                     <TouchableOpacity style={styles.cancelButton} onPress={() => Alert.alert('Cancelado')}>
                         <Text style={styles.cancelButtonText}>Cancelar</Text>
@@ -171,6 +193,7 @@ export default function CreateLivro() {
         </ScrollView>
     );
 }
+
 
 const styles = StyleSheet.create({
     scrollContainer: {
@@ -199,6 +222,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 15,
         fontSize: 16,
+        justifyContent: 'center',
     },
     uploadButton: {
         flexDirection: 'row',
@@ -214,6 +238,13 @@ const styles = StyleSheet.create({
         color: '#1f2a44',
         fontWeight: 'bold',
     },
+    capaImage: {
+        width: 200,
+        height: 300,
+        alignSelf: 'center',
+        marginBottom: 15,
+        borderRadius: 10,
+    },
     radioGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -221,45 +252,52 @@ const styles = StyleSheet.create({
     },
     radioTitle: {
         color: '#fff',
+        fontSize: 18,
         fontWeight: 'bold',
     },
     radioButton: {
-        color: '#fff',
-        fontSize: 16,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: '#fff',
     },
-    radioSelected: {
-        backgroundColor: '#4CAF50',
+    novo: {
+        backgroundColor: '#66ff66',
+    },
+    seminovo: {
+        backgroundColor: '#ffff66',
+    },
+    usado: {
+        backgroundColor: '#ff6666',
+    },
+    radioText: {
+        fontWeight: 'bold',
+        color: '#1f2a44',
     },
     buttonGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 20,
     },
     cancelButton: {
-        backgroundColor: '#F08080',
+        backgroundColor: '#ff6666',
         padding: 15,
         borderRadius: 10,
-        width: '45%',
-        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
     },
     cancelButtonText: {
         color: '#fff',
+        textAlign: 'center',
         fontWeight: 'bold',
-        fontSize: 16,
     },
     saveButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#66ff66',
         padding: 15,
         borderRadius: 10,
-        width: '45%',
-        alignItems: 'center',
+        flex: 1,
     },
     saveButtonText: {
-        color: '#fff',
+        color: '#1f2a44',
+        textAlign: 'center',
         fontWeight: 'bold',
-        fontSize: 16,
     },
 });

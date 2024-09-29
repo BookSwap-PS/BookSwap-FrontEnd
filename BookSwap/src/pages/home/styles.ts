@@ -3,11 +3,12 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#BFBFBF',
+        backgroundColor: '#1A2B45',
         paddingHorizontal: 20,
         paddingTop: 20,
     },
     listContent: {
+        paddingTop: 20,
         paddingBottom: 80,
     },
     row: {
@@ -15,7 +16,7 @@ export const styles = StyleSheet.create({
         marginBottom: 20,
     },
     bookCard: {
-        backgroundColor: '#fff',
+        backgroundColor: '#f2f2f2',
         borderRadius: 10,
         padding: 10,
         width: '48%',
