@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BottomTabNavigator from '../BottomTabNavigator'; // Certifique-se de ter o componente do menu importado
 
 interface Livro {
     id: number;
@@ -86,8 +87,15 @@ export default function UserLibraryScreen() {
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
-                ListEmptyComponent={<Text>Você ainda não adicionou nenhum livro à sua biblioteca.</Text>}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>
+                            Você ainda não possui nenhum livro cadastrado em sua biblioteca
+                        </Text>
+                    </View>
+                }
             />
+            
         </View>
     );
 }
@@ -135,5 +143,20 @@ const styles = StyleSheet.create({
         color: '#888',
         textAlign: 'center',
         marginTop: 10,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#3b5998', 
+        borderRadius: 10,
+        padding: 20,
+        marginVertical: 20,
+    },
+    emptyText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
 });

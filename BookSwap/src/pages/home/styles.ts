@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
         marginBottom: 20,
     },
     bookCard: {
-        backgroundColor: '#B8B8B8',
+        backgroundColor: '#f2f2f2',
         borderRadius: 10,
         padding: 10,
         width: '48%',
