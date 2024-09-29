@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function CreateLivro() {
@@ -41,7 +41,7 @@ export default function CreateLivro() {
                 uri: capa,
                 name: `capa.${fileType}`,
                 type: `image/${fileType}`,
-            } as any); // Ajuste aqui
+            } as any);
         }
 
         try {
@@ -58,11 +58,20 @@ export default function CreateLivro() {
             if (response.ok) {
                 Alert.alert("Sucesso", "Livro criado com sucesso!");
                 // Resetar os campos
+                setTitulo('');
+                setAutor('');
+                setEditora('');
+                setGenero('');
+                setDescricao('');
+                setPaginas('');
+                setDataPublicacao(null);
+                setCapa(null);
+                setCondicao('');
             } else {
                 Alert.alert("Erro", data.detail || JSON.stringify(data));
             }
         } catch (error) {
-            const errorMessage = (error as Error).message; // Aqui
+            const errorMessage = (error as Error).message;
             Alert.alert("Erro", `Erro ao criar o livro: ${errorMessage}`);
         }
     };
@@ -193,7 +202,6 @@ export default function CreateLivro() {
         </ScrollView>
     );
 }
-
 
 const styles = StyleSheet.create({
     scrollContainer: {
