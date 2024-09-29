@@ -83,7 +83,7 @@ export default function LivroDetail({ route }: LivroDetailProps) {
                 <RefreshControl 
                     refreshing={refreshing} 
                     onRefresh={onRefresh} 
-                    tintColor="#2c3e51" // Cor do refresh
+                    tintColor="#f9f9f9" // Cor do refresh
                 />
             }
         >
