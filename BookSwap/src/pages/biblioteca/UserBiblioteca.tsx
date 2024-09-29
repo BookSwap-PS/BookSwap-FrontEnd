@@ -7,6 +7,7 @@ import {
     FlatList,
     ActivityIndicator,
     TouchableOpacity,
+    RefreshControl,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_DEV_URL } from '@env';
@@ -31,6 +32,7 @@ type UserBibliotecaScreenNavigationProp = StackNavigationProp<RootStackParamList
 const UserBiblioteca: React.FC = () => {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // Estado para o refresh
     const navigation = useNavigation<UserBibliotecaScreenNavigationProp>(); // Tipagem correta
 
     const fetchUserBooks = async () => {
@@ -49,12 +51,18 @@ const UserBiblioteca: React.FC = () => {
             console.error('Erro ao buscar livros do usuário:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false); // Para o ícone de refresh
         }
     };
 
     useEffect(() => {
         fetchUserBooks();  // Carrega os livros do usuário ao montar o componente
     }, []);
+
+    const onRefresh = () => {
+        setRefreshing(true); // Mostra o ícone de refresh
+        fetchUserBooks(); // Atualiza os dados ao fazer refresh
+    };
 
     const renderItem = ({ item }: { item: Livro }) => (
         <TouchableOpacity
@@ -90,6 +98,13 @@ const UserBiblioteca: React.FC = () => {
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh} // Chama a função de refresh
+                        tintColor="#f9f9f9" // Cor do indicador de refresh
+                    />
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyText}>
