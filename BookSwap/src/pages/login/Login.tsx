@@ -60,10 +60,10 @@ export default function Login() {
             </View>
 
             <View style={styles.formContainer}>
-                <Text style={styles.label}>E-mail</Text>
+                <Text style={styles.label}>Usuário</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Digite aqui seu e-mail"
+                    placeholder="Digite aqui seu Usuário"
                     value={usuario}
                     onChangeText={setUsuario}
                 />
