@@ -112,7 +112,9 @@ export default function ListLivro() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        colors={['#0000ff']}
+                        colors={['#A9A9A9']} // Cor neutra para o ícone de carregamento
+                        tintColor={'#A9A9A9'} // Cor neutra para iOS
+                        progressBackgroundColor={'#F5F5F5'} // Fundo neutro
                     />
                 }
             />

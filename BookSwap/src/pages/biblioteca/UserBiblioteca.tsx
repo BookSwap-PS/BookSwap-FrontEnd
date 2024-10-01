@@ -8,10 +8,10 @@ import {
     Image,
     ActivityIndicator,
     TouchableOpacity,
+    RefreshControl, 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomTabNavigator from '../BottomTabNavigator'; // Certifique-se de ter o componente do menu importado
 
 interface Livro {
     id: number;
@@ -28,6 +28,7 @@ interface Livro {
 export default function UserLibraryScreen() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // Estado para refresh
     const navigation = useNavigation();
 
     const fetchUserBooks = async () => {
@@ -47,6 +48,12 @@ export default function UserLibraryScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true); // Inicia o estado de refresh
+        await fetchUserBooks(); // Busca os dados novamente
+        setRefreshing(false); // Finaliza o estado de refresh
     };
 
     useEffect(() => {
@@ -87,6 +94,15 @@ export default function UserLibraryScreen() {
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
+                refreshControl={ // Adiciona a funcionalidade de "pull to refresh"
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#A9A9A9']}
+                        tintColor={'#A9A9A9'}
+                        progressBackgroundColor={'#F5F5F5'}
+                    />
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyText}>
@@ -95,7 +111,6 @@ export default function UserLibraryScreen() {
                     </View>
                 }
             />
-            
         </View>
     );
 }
