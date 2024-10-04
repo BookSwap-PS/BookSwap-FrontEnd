@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 
@@ -7,6 +7,7 @@ export default function LivroDetail({ route }) {
     const { livroId } = route.params; // Pega o ID passado pela navegação
     const [livro, setLivro] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // Estado para o pull to refresh
 
     const fetchLivroDetalhes = async () => {
         try {
@@ -26,14 +27,21 @@ export default function LivroDetail({ route }) {
             console.error('Erro ao buscar detalhes do livro:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false); // Para o estado de refresh ao finalizar
         }
+    };
+
+    // Função de refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchLivroDetalhes();
     };
 
     useEffect(() => {
         fetchLivroDetalhes();
     }, []);
 
-    if (loading) {
+    if (loading && !refreshing) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#0000ff" />
@@ -51,7 +59,18 @@ export default function LivroDetail({ route }) {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+            contentContainerStyle={styles.container}
+            refreshControl={ // Adiciona o RefreshControl ao ScrollView
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#A9A9A9']} // Cor neutra (cinza)
+                    tintColor={'#A9A9A9'} // Cor neutra para iOS
+                    progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+                />
+            }
+        >
             <Text style={styles.bookTitle}>{livro.titulo}</Text>
             {livro.capa ? (
                 <Image source={{ uri: livro.capa }} style={styles.bookImage} />
