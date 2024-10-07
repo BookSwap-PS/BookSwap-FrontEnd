@@ -6,7 +6,8 @@ import Home from './home/Home';
 import ListLivro from './livro/ListLivro';
 import CreateLivro from './livro/CreateLivro';
 import Perfil from './profile/profile';
-import configuracoes from './configuracoes/configuracoes';
+import Configuracoes from './configuracoes/configuracoes';
+import SearchUser from './profile/SearchUser'; // Importando o componente SearchUser
 
 const Tab = createBottomTabNavigator();
 
@@ -26,9 +27,9 @@ function CustomSearchButton({ children, onPress }) {
           width: 70,
           height: 70,
           borderRadius: 35,
-          backgroundColor: '#FF6347', // Cor azul do botão central
-          justifyContent: 'center', // Alinha verticalmente
-          alignItems: 'center', // Alinha horizontalmente
+          backgroundColor: '#FF6347', // Cor do botão central
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         {children}
@@ -56,6 +57,9 @@ export default function BottomTabNavigator() {
             case 'Configurações':
               iconName = focused ? 'settings' : 'settings-outline';
               break;
+            case 'Buscar Usuários':
+              iconName = focused ? 'search-circle' : 'search-outline'; // Ícone de busca
+              break;
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -71,25 +75,32 @@ export default function BottomTabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Início" component={Home} options={{headerShown: false}} />
-      <Tab.Screen name="Adicionar" component={CreateLivro} options={{headerShown: false}} />
+      <Tab.Screen name="Início" component={Home} options={{ headerShown: false }} />
+      <Tab.Screen name="Adicionar" component={CreateLivro} options={{ headerShown: false }} />
       
       {/* Central search button */}
       <Tab.Screen
         name="Buscar"
-        component={ListLivro} // Substituir pelo componente desejado
+        component={ListLivro}
         options={{
           tabBarButton: (props) => (
             <CustomSearchButton {...props}>
               <Ionicons name="search" size={30} color="white" />
             </CustomSearchButton>
           ),
-          headerShown: false
+          headerShown: false,
         }}
       />
+
+      {/* Adicionando o SearchUser */}
+      <Tab.Screen 
+        name="Buscar Usuários" 
+        component={SearchUser} 
+        options={{ headerShown: false }} 
+      />
       
-      <Tab.Screen name="Perfil" component={Perfil} options={{headerShown: false}}  />
-      <Tab.Screen name="Configurações" component={configuracoes} options={{headerShown: false}} />
+      <Tab.Screen name="Perfil" component={Perfil} options={{ headerShown: false }} />
+      <Tab.Screen name="Configurações" component={Configuracoes} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
