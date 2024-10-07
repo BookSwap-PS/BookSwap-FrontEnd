@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from "jwt-decode";
+
 
 const ProfileScreen = ({ navigation }) => {
-  const [profile, setProfile] = useState(null);
+  const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
+  const [profile, setProfile] = useState(null); // Estado para o perfil do usuário autenticado
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
 
@@ -14,10 +17,22 @@ const ProfileScreen = ({ navigation }) => {
 
   const fetchProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
 
       if (!token) {
         console.log('Token não encontrado');
+        return;
+      }
+
+      // Usando jwt-decode para decodificar o token JWT e obter o user_id
+      const decodedToken = jwtDecode(token); 
+      const authenticatedUserId = decodedToken.user_id; // Extraindo o user_id do payload
+
+      console.log('Token:', token);
+      console.log('Authenticated User ID:', authenticatedUserId);
+
+      if (!authenticatedUserId) {
+        console.log('ID do usuário não encontrado no token');
         return;
       }
 
@@ -35,10 +50,12 @@ const ProfileScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        if (Array.isArray(data) && data.length > 0) {
-          setProfile(data[0]);
+        setAllProfiles(data); // Armazena todos os perfis no estado
+        const userProfile = data.find(profile => profile.usuario.id === parseInt(authenticatedUserId));
+        if (userProfile) {
+          setProfile(userProfile);
         } else {
-          console.log('Nenhum dado de perfil encontrado');
+          console.log('Perfil do usuário autenticado não encontrado');
         }
       } else {
         console.log('Erro ao buscar dados do perfil:', data);
@@ -58,7 +75,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile'); // Navega para a tela de edição de perfil
+    if (profile) {
+      // Passa o perfil do usuário para a tela de edição
+      navigation.navigate('EditProfile', { profile }); 
+    } else {
+      console.log('Perfil não encontrado');
+    }
   };
 
   const handleViewLibrary = () => {
