@@ -20,13 +20,11 @@ const UserProfile = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem('token');
       const authenticatedUserId = await AsyncStorage.getItem('user_id'); // Certifica-se de que o user_id está sendo recuperado
 
-      console.log('Authenticated User ID:', authenticatedUserId); // Log para verificar se o user_id está correto
-
       if (!token || !authenticatedUserId) {
         console.log('Token ou ID do usuário não encontrado');
         return;
       }
-
+      console.log(userId)
       const response = await fetch(`${API_DEV_URL}/perfil/${userId}/`, {
         method: 'GET',
         headers: {
