@@ -24,8 +24,15 @@ const UserProfile = ({ route, navigation }) => {
         console.log('Token ou ID do usuário não encontrado');
         return;
       }
-      console.log(userId)
-      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/`, {
+
+      console.log("ID do usuário autenticado:", authenticatedUserId);
+      console.log("ID do perfil sendo visualizado:", userId);
+
+      // Converta ambos os valores para string para garantir a comparação correta
+      const authenticatedId = String(authenticatedUserId);
+      const viewingUserId = String(userId);
+
+      const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -38,8 +45,8 @@ const UserProfile = ({ route, navigation }) => {
       if (response.ok) {
         setProfile(data);
         // Verifica se o perfil que está sendo exibido é o do usuário autenticado
-        setIsOwner(userId === authenticatedUserId); 
-        // Supondo que o backend retorne se o usuário autenticado já está seguindo o perfil
+        setIsOwner(viewingUserId === authenticatedId); 
+        // Verifica se o perfil já está sendo seguido
         setFollowing(data.is_following || false);
       } else {
         console.log('Erro ao buscar perfil do usuário:', data);
@@ -55,7 +62,7 @@ const UserProfile = ({ route, navigation }) => {
   const handleFollow = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${API_DEV_URL}/seguir/${userId}/`, {
+      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/seguir/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -77,7 +84,7 @@ const UserProfile = ({ route, navigation }) => {
   const handleUnfollow = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${API_DEV_URL}/seguir/${userId}/`, {
+      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/deixar_de_seguir/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

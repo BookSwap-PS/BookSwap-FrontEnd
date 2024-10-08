@@ -42,7 +42,7 @@ export default function Login() {
             if (response.ok) {
                 // Salva o token e o user_id no AsyncStorage
                 await AsyncStorage.setItem('token', data.access);
-                await AsyncStorage.setItem('user_id', String(data.user_id)); // Certifica-se de que o user_id está sendo salvo
+                // await AsyncStorage.setItem('user_id', String(data.user_id)); // Certifica-se de que o user_id está sendo salvo
 
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
                 navigation.navigate('Main'); 
