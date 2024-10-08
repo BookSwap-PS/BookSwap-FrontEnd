@@ -78,7 +78,13 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#A9A9A9']} // Cor neutra (cinza)
+            tintColor={'#A9A9A9'} // Cor neutra para iOS
+            progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+          />
         }
       >
         <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
@@ -93,7 +99,13 @@ const ProfileScreen = ({ navigation }) => {
     <ScrollView
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#A9A9A9']} // Cor neutra (cinza)
+          tintColor={'#A9A9A9'} // Cor neutra para iOS
+          progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+        />
       }
     >
       <View style={styles.header}>

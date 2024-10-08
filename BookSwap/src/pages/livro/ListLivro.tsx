@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     TextInput,
+    RefreshControl, // Importa o RefreshControl
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -27,6 +28,7 @@ interface Livro {
 export default function ListLivro() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false); // Estado para o pull to refresh
     const [searchQuery, setSearchQuery] = useState(''); // Estado para o termo de busca
     const navigation = useNavigation();
 
@@ -45,6 +47,13 @@ export default function ListLivro() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Função que lida com o refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchLivros(); // Recarrega a lista de livros
+        setRefreshing(false);
     };
 
     // Busca livros na montagem inicial
@@ -108,6 +117,15 @@ export default function ListLivro() {
                 numColumns={2}
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={<Text>Nenhum livro disponível no momento.</Text>}
+                refreshControl={ // Adiciona o RefreshControl para o pull to refresh
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh} // Função de refresh
+                        colors={['#A9A9A9']} // Cor neutra (cinza)
+                        tintColor={'#A9A9A9'} // Cor neutra para iOS
+                        progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+                    />
+                }
             />
         </View>
     );
