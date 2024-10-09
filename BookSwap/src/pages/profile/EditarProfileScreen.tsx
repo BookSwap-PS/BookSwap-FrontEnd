@@ -3,6 +3,8 @@ import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { jwtDecode } from "jwt-decode";
+
 
 const EditProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
@@ -18,15 +20,22 @@ const EditProfileScreen = ({ navigation }) => {
     fetchProfileData();
   }, []);
 
+
   const fetchProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-
+      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
+  
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
-
+  
+      // Decodifica o token JWT para obter o ID do usuário autenticado
+      const decodedToken = jwtDecode(token);
+      const authenticatedUserId = decodedToken.user_id; // Extraindo o user_id do payload
+  
+      console.log('Authenticated User ID:', authenticatedUserId);
+  
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
         headers: {
@@ -34,18 +43,25 @@ const EditProfileScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         if (Array.isArray(data) && data.length > 0) {
-          setProfile(data[0]);
-          const { usuario, image } = data[0];
-          setFirstName(usuario.first_name);
-          setLastName(usuario.last_name);
-          setEmail(usuario.email);
-          setUsername(usuario.username);
-          setImage(image);  // Definindo a imagem existente do perfil
+          // Filtrar o perfil correto com base no user_id do token JWT
+          const userProfile = data.find(profile => profile.usuario.id === authenticatedUserId);
+          
+          if (userProfile) {
+            setProfile(userProfile);
+            const { usuario, image } = userProfile;
+            setFirstName(usuario.first_name);
+            setLastName(usuario.last_name);
+            setEmail(usuario.email);
+            setUsername(usuario.username);
+            setImage(image);  // Definindo a imagem existente do perfil
+          } else {
+            console.log('Perfil do usuário autenticado não encontrado');
+          }
         } else {
           console.log('Nenhum dado de perfil encontrado');
         }

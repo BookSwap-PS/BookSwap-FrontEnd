@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 
-export default function LivroDetail({ route }) {
+export default function LivroDetail({ route, navigation }) {
     const { livroId } = route.params; // Pega o ID passado pela navegação
     const [livro, setLivro] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false); // Estado para o pull to refresh
 
+    // Função para buscar os detalhes do livro
     const fetchLivroDetalhes = async () => {
         try {
             const token = await AsyncStorage.getItem('token'); // Obtém o token JWT armazenado
-            console.log("prod: "+`${API_BASE_URL}/livro/${livroId}/`)
-            console.log("dev: "+`${API_DEV_URL}/livro/${livroId}/`)
             const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {
@@ -22,7 +21,7 @@ export default function LivroDetail({ route }) {
                 },
             });
             const data = await response.json();
-            setLivro(data);
+            setLivro(data); // Armazena os dados do livro
         } catch (error) {
             console.error('Erro ao buscar detalhes do livro:', error);
         } finally {
@@ -82,9 +81,19 @@ export default function LivroDetail({ route }) {
             <Text>Editora: {livro.editora}</Text>
             <Text>Descrição: {livro.descricao}</Text>
             <Text>Publicado em: {livro.dataPublicacao}</Text>
-            <Text>Genero: {livro.genero}</Text>
+            <Text>Gênero: {livro.genero}</Text>
             <Text>Condição: {livro.condicao}</Text>
             <Text>Dono: {livro.dono}</Text>
+            <Text>Donoid: {livro.perfil_id}</Text>
+            <TouchableOpacity
+                style={styles.ownerButton}
+                onPress={() => navigation.navigate('UserProfile', { userId: livro.perfil_id })}
+            >
+                {/* Envolvemos o texto "Dono" e "livro.dono" em <Text> */}
+                <Text style={styles.ownerButtonText}>
+                    Dono: {livro.dono}
+                </Text>
+            </TouchableOpacity>
         </ScrollView>
     );
 }
@@ -128,5 +137,16 @@ const styles = StyleSheet.create({
         color: '#888',
         textAlign: 'center',
         marginBottom: 20,
+    },
+    ownerButton: {
+        backgroundColor: '#3498db',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        marginTop: 10,
+    },
+    ownerButtonText: {
+        color: '#fff',
+        fontSize: 16,
     },
 });
