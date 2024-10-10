@@ -17,19 +17,18 @@ const UserProfile = ({ route, navigation }) => {
 
   const fetchUserProfile = async () => {
     try {
+      setLoading(true);
       const token = await AsyncStorage.getItem('token');
       const authenticatedUserId = await AsyncStorage.getItem('user_id'); // Certifica-se de que o user_id está sendo recuperado
 
-      if (!token || !authenticatedUserId) {
-        console.log('Token ou ID do usuário não encontrado');
+      if (!token) {
+        console.log('Token não encontrado');
         return;
       }
 
-      console.log("ID do usuário autenticado:", authenticatedUserId);
       console.log("ID do perfil sendo visualizado:", userId);
 
-      // Converta ambos os valores para string para garantir a comparação correta
-      const authenticatedId = String(authenticatedUserId);
+      // Converta o valor para string para garantir a comparação correta
       const viewingUserId = String(userId);
 
       const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
@@ -45,7 +44,9 @@ const UserProfile = ({ route, navigation }) => {
       if (response.ok) {
         setProfile(data);
         // Verifica se o perfil que está sendo exibido é o do usuário autenticado
-        setIsOwner(viewingUserId === authenticatedId); 
+        if (authenticatedUserId) {
+          setIsOwner(viewingUserId === String(authenticatedUserId));
+        }
         // Verifica se o perfil já está sendo seguido
         setFollowing(data.is_following || false);
       } else {
@@ -62,6 +63,11 @@ const UserProfile = ({ route, navigation }) => {
   const handleFollow = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('Token não encontrado para seguir');
+        return;
+      }
+
       const response = await fetch(`${API_DEV_URL}/perfil/${userId}/seguir/`, {
         method: 'POST',
         headers: {
@@ -84,6 +90,11 @@ const UserProfile = ({ route, navigation }) => {
   const handleUnfollow = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('Token não encontrado para deixar de seguir');
+        return;
+      }
+
       const response = await fetch(`${API_DEV_URL}/perfil/${userId}/deixar_de_seguir/`, {
         method: 'DELETE',
         headers: {
@@ -120,7 +131,7 @@ const UserProfile = ({ route, navigation }) => {
   }
 
   const { usuario, image, seguindo } = profile;
-  const { first_name, last_name, username, email } = usuario;
+  const { first_name, last_name, username, email } = usuario || {};
 
   return (
     <ScrollView
@@ -149,10 +160,9 @@ const UserProfile = ({ route, navigation }) => {
 
       <View style={styles.infoContainer}>
         <Text style={styles.email}>{email}</Text>
-        <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
+        <Text style={styles.following}>Seguindo: {seguindo?.length || 0}</Text>
       </View>
 
-      {/* Exibe botão de seguir ou deixar de seguir caso não seja o usuário autenticado */}
       {!isOwner && (
         following ? (
           <TouchableOpacity style={styles.unfollowButton} onPress={handleUnfollow}>

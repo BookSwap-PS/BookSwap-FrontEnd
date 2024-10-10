@@ -1,54 +1,49 @@
-import React from 'react'; // Importando o React
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // Importando o componente de navegação de abas
-import { Ionicons } from '@expo/vector-icons'; // Importando ícones da biblioteca Expo
-import { View, TouchableOpacity } from 'react-native'; // Importando componentes do React Native
-import Home from './home/Home'; // Importando o componente Home
-import ListLivro from './livro/ListLivro'; // Importando o componente para listar livros
-import CreateLivro from './livro/CreateLivro'; // Importando o componente para criar livros
-import Perfil from './profile/profile'; // Importando o componente de perfil
-import Configuracoes from './configuracoes/configuracoes'; // Importando o componente de configurações
-import SearchUser from './profile/SearchUser'; // Importando o componente de busca de usuários
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { View, TouchableOpacity } from 'react-native';
+import Home from './home/Home';
+import ListLivro from './livro/ListLivro';
+import CreateLivro from './livro/CreateLivro';
+import Perfil from './profile/profile';
+import Configuracoes from './configuracoes/configuracoes';
+import SearchUser from './profile/SearchProfiles'; // Importando o componente de busca de usuários
 
-// Criando o componente de navegação de abas
 const Tab = createBottomTabNavigator();
 
-// Componente para o botão de busca personalizado (central na tab bar)
 function CustomSearchButton({ children, onPress }) {
   return (
     <TouchableOpacity
       style={{
-        top: -30, // Posição elevada do botão
+        top: -25, // Ajustado para um leve deslocamento para cima
         justifyContent: 'center',
         alignItems: 'center',
-        ...styles.shadow, // Aplicando sombras
+        ...styles.shadow,
       }}
-      onPress={onPress} // Função chamada ao pressionar o botão
+      onPress={onPress}
     >
       <View
         style={{
           width: 70,
           height: 70,
-          borderRadius: 35, // Botão circular
+          borderRadius: 35,
           backgroundColor: '#FF6347', // Cor do botão central
           justifyContent: 'center',
-          alignItems: 'center', // Centralizando o conteúdo no botão
+          alignItems: 'center',
         }}
       >
-        {children} {/* Conteúdo passado para o botão */}
+        {children}
       </View>
     </TouchableOpacity>
   );
 }
 
-// Componente de navegação entre abas
 export default function BottomTabNavigator() {
   return (
     <Tab.Navigator
-      // Configurações para cada aba
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          // Definindo ícones de acordo com a aba
           switch (route.name) {
             case 'Início':
               iconName = focused ? 'home' : 'home-outline';
@@ -62,47 +57,46 @@ export default function BottomTabNavigator() {
             case 'Configurações':
               iconName = focused ? 'settings' : 'settings-outline';
               break;
-            case 'Buscar Usuários':
-              iconName = focused ? 'search-circle' : 'search-outline'; // Ícone para a aba de busca de usuários
+            case 'Buscar Usuários': // Ícone para a nova aba de busca de usuários
+              iconName = focused ? 'search-circle' : 'search-outline';
               break;
           }
-          return <Ionicons name={iconName} size={size} color={color} />; // Retornando o ícone apropriado
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#FF6347', // Cor da aba ativa
-        tabBarInactiveTintColor: 'gray', // Cor da aba inativa
+        tabBarActiveTintColor: '#FF6347',
+        tabBarInactiveTintColor: 'gray',
         tabBarLabelStyle: {
-          fontSize: 12, // Tamanho da fonte do rótulo da aba
+          fontSize: 12,
         },
         tabBarStyle: {
-          backgroundColor: '#fff', // Cor de fundo da barra de abas
+          backgroundColor: '#fff',
           height: 60,
-          paddingBottom: 5, // Espaçamento inferior da barra
+          paddingBottom: 5,
         },
       })}
     >
-      {/* Definindo as telas para cada aba */}
       <Tab.Screen name="Início" component={Home} options={{ headerShown: false }} />
       <Tab.Screen name="Adicionar" component={CreateLivro} options={{ headerShown: false }} />
       
-      {/* Botão de busca central personalizado */}
+      {/* Central search button */}
       <Tab.Screen
         name="Buscar"
-        component={ListLivro}
+        component={ListLivro} // Substituir pelo componente desejado
         options={{
           tabBarButton: (props) => (
             <CustomSearchButton {...props}>
-              <Ionicons name="search" size={30} color="white" /> {/* Ícone de busca */}
+              <Ionicons name="search" size={30} color="white" />
             </CustomSearchButton>
           ),
-          headerShown: false,
+          headerShown: false
         }}
       />
 
-      {/* Tela de busca de usuários */}
-      <Tab.Screen 
-        name="Buscar Usuários" 
-        component={SearchUser} 
-        options={{ headerShown: false }} 
+      {/* Adicionando a tela de busca de usuários */}
+      <Tab.Screen
+        name="Buscar Usuários"
+        component={SearchUser}
+        options={{ headerShown: false }}
       />
       
       <Tab.Screen name="Perfil" component={Perfil} options={{ headerShown: false }} />
@@ -111,16 +105,15 @@ export default function BottomTabNavigator() {
   );
 }
 
-// Estilos para o botão de busca central
 const styles = {
   shadow: {
-    shadowColor: '#7F5DF0', // Cor da sombra
+    shadowColor: '#7F5DF0',
     shadowOffset: {
       width: 0,
-      height: 10, // Definindo a posição da sombra
+      height: 10,
     },
-    shadowOpacity: 0.25, // Opacidade da sombra
-    shadowRadius: 3.5, // Raio da sombra
-    elevation: 5, // Elevação para Android
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5,
   },
 };
