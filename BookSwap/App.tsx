@@ -6,18 +6,17 @@ import Login from './src/pages/login/Login';
 import Registro from './src/pages/registroUser/Registro';
 import LivroDetail from './src/pages/livro/LivroDetail';
 import EditProfileScreen from './src/pages/profile/EditarProfileScreen';
-import BottomTabNavigator from './src/pages/BottomTabNavigator'; 
-import UserLibraryScreen from './src/pages/biblioteca/UserBiblioteca'; 
-import UserProfile from './src/pages/profile/UserProfile'; 
+import BottomTabNavigator from './src/pages/BottomTabNavigator';
+import UserLibraryScreen from './src/pages/biblioteca/UserBiblioteca';
+import UserProfile from './src/pages/profile/UserProfile';
+import SearchUser from './src/pages/profile/SearchProfiles';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      {/* Define a barra de status com fundo branco e ícones escuros */}
       <StatusBar barStyle="light-content" backgroundColor="#1A2B45" />
-      
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={Login} options={{ title: 'Login', headerShown: false }} />
         <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false }} />
@@ -26,6 +25,7 @@ export default function App() {
         <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
         <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'UserLibrary', headerShown: false }} />
         <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'UserProfile', headerShown: false }} />
+        <Stack.Screen name="SearchUser" component={SearchUser} options={{ title: 'Buscar Usuários', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
