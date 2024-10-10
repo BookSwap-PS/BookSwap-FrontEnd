@@ -58,7 +58,7 @@ export default function BottomTabNavigator() {
               iconName = focused ? 'settings' : 'settings-outline';
               break;
             case 'Buscar Usuários': // Ícone para a nova aba de busca de usuários
-              iconName = focused ? 'search-circle' : 'search-outline';
+              iconName = focused ? 'people-circle' : 'people-outline';
               break;
           }
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -96,7 +96,16 @@ export default function BottomTabNavigator() {
       <Tab.Screen
         name="Buscar Usuários"
         component={SearchUser}
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? 'people-circle' : 'people-outline'} 
+              size={size} 
+              color={color} 
+            />
+          ),
+        }}
       />
       
       <Tab.Screen name="Perfil" component={Perfil} options={{ headerShown: false }} />
