@@ -226,7 +226,7 @@ const EditProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex:1,
-    backgroundColor: '#2c3e51',
+    backgroundColor: '#1A2B45',
     padding:16,
     justifyContent: 'center',
   },

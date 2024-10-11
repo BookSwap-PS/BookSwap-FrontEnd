@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
+import Icon from 'react-native-vector-icons/Ionicons'; // Certifique-se de ter esta biblioteca instalada
 
 const UserProfile = ({ route, navigation }) => {
   const { userId } = route.params; // Pega o ID do perfil passado pela navegação
@@ -147,6 +148,11 @@ const UserProfile = ({ route, navigation }) => {
       }
     >
       <View style={styles.header}>
+        {/* Botão de voltar */}
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
         ) : (
@@ -193,6 +199,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: 32,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
   },
   profileImage: {
     width: 140,
