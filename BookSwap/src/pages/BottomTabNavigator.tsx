@@ -6,7 +6,7 @@ import Home from './home/Home';
 import ListLivro from './livro/ListLivro';
 import CreateLivro from './livro/CreateLivro';
 import Perfil from './profile/profile';
-import Configuracoes from './configuracoes/configuracoes';
+//import Configuracoes from './configuracoes/configuracoes';
 import SearchUser from './profile/SearchProfiles'; // Importando o componente de busca de usuários
 
 const Tab = createBottomTabNavigator();
@@ -54,9 +54,9 @@ export default function BottomTabNavigator() {
             case 'Perfil':
               iconName = focused ? 'person' : 'person-outline';
               break;
-            case 'Configurações':
-              iconName = focused ? 'settings' : 'settings-outline';
-              break;
+            //case 'Configurações':
+              //iconName = focused ? 'settings' : 'settings-outline';
+              //break;
             case 'Buscar Usuários': // Ícone para a nova aba de busca de usuários
               iconName = focused ? 'people-circle' : 'people-outline';
               break;
@@ -109,8 +109,10 @@ export default function BottomTabNavigator() {
       />
       
       <Tab.Screen name="Perfil" component={Perfil} options={{ headerShown: false }} />
+        {/*
       <Tab.Screen name="Configurações" component={Configuracoes} options={{ headerShown: false }} />
-    </Tab.Navigator>
+          */}
+      </Tab.Navigator>
   );
 }
 

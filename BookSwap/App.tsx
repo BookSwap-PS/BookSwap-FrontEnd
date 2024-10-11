@@ -10,6 +10,7 @@ import BottomTabNavigator from './src/pages/BottomTabNavigator';
 import UserLibraryScreen from './src/pages/biblioteca/UserBiblioteca';
 import UserProfile from './src/pages/profile/UserProfile';
 import SearchUser from './src/pages/profile/SearchProfiles';
+import CreateResenha from './src/pages/livro/CreateResenha';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +27,7 @@ export default function App() {
         <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'UserLibrary', headerShown: false }} />
         <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'UserProfile', headerShown: false }} />
         <Stack.Screen name="SearchUser" component={SearchUser} options={{ title: 'Buscar Usuários', headerShown: false }} />
+        <Stack.Screen name="CreateResenha" component={CreateResenha} options={{ title: 'Criar Resenha', headerShown: false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );
