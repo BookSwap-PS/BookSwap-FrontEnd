@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
+import { jwtDecode } from 'jwt-decode'; // Removi as chaves para importar corretamente
 import Icon from 'react-native-vector-icons/Ionicons'; // Certifique-se de ter esta biblioteca instalada
 
 const UserProfile = ({ route, navigation }) => {
@@ -11,6 +12,7 @@ const UserProfile = ({ route, navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [following, setFollowing] = useState(false);
   const [isOwner, setIsOwner] = useState(false); // Verifica se é o usuário autenticado
+  const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
 
   useEffect(() => {
     fetchUserProfile();
@@ -20,18 +22,27 @@ const UserProfile = ({ route, navigation }) => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
-      const authenticatedUserId = await AsyncStorage.getItem('user_id'); // Certifica-se de que o user_id está sendo recuperado
-
+      
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
-
-      console.log("ID do perfil sendo visualizado:", userId);
-
-      // Converta o valor para string para garantir a comparação correta
-      const viewingUserId = String(userId);
-
+    
+      // Decodificando o token para obter o ID do usuário autenticado
+      const decodedToken = jwtDecode(token);
+      const userLogId = decodedToken.user_id;
+    
+      if (!userLogId) {
+        console.log("Usuário não encontrado");
+        return;
+      }
+    
+      console.log("ID do usuário autenticado:", userLogId);
+      setAuthenticatedUserId(userLogId);
+    
+      const viewingUserId = parseInt(userId);
+      console.log("ID do perfil sendo visualizado:", viewingUserId);
+    
       const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
         method: 'GET',
         headers: {
@@ -40,16 +51,39 @@ const UserProfile = ({ route, navigation }) => {
         },
       });
 
+      const response2 = await fetch(`${API_DEV_URL}/perfil/${userLogId}/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    
       const data = await response.json();
-
-      if (response.ok) {
+      const data2 = await response2.json();
+    
+      if (response.ok && response2.ok) {
         setProfile(data);
+    
         // Verifica se o perfil que está sendo exibido é o do usuário autenticado
-        if (authenticatedUserId) {
-          setIsOwner(viewingUserId === String(authenticatedUserId));
+        setIsOwner(viewingUserId === String(userLogId));
+    
+        // Verifica se o perfil já está sendo seguido usando a lista de IDs
+        console.log("Dados do perfil:", data);
+    
+        if (data2.seguindo && Array.isArray(data2.seguindo)) {
+          // Verifica se o ID do perfil visualizado está na lista `data.seguindo`
+          const isFollowing = data2.seguindo.includes(viewingUserId);
+          console.log("data.seguindo: ", data2.seguindo)
+          console.log("viewingUserId: ", viewingUserId)
+
+          setFollowing(isFollowing);
+          console.log("Estado following:", isFollowing); // Adicionado console.log para verificação
+        } else {
+          setFollowing(false);
+          console.log("Estado following:", false); // Adicionado console.log para verificação
         }
-        // Verifica se o perfil já está sendo seguido
-        setFollowing(data.is_following || false);
+    
       } else {
         console.log('Erro ao buscar perfil do usuário:', data);
       }
@@ -59,7 +93,7 @@ const UserProfile = ({ route, navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  };  
 
   const handleFollow = async () => {
     try {
@@ -79,7 +113,7 @@ const UserProfile = ({ route, navigation }) => {
 
       if (response.ok) {
         setFollowing(true);
-        alert('Você agora está seguindo esse usuário.');
+        Alert.alert('Sucesso', 'Você agora está seguindo esse usuário.');
       } else {
         console.log('Erro ao seguir o usuário.');
       }
@@ -106,7 +140,7 @@ const UserProfile = ({ route, navigation }) => {
 
       if (response.ok) {
         setFollowing(false);
-        alert('Você deixou de seguir este usuário.');
+        Alert.alert('Sucesso', 'Você deixou de seguir este usuário.');
       } else {
         console.log('Erro ao deixar de seguir o usuário.');
       }
@@ -169,6 +203,7 @@ const UserProfile = ({ route, navigation }) => {
         <Text style={styles.following}>Seguindo: {seguindo?.length || 0}</Text>
       </View>
 
+      {/* Botões de seguir/deixar de seguir dependendo do estado */}
       {!isOwner && (
         following ? (
           <TouchableOpacity style={styles.unfollowButton} onPress={handleUnfollow}>
