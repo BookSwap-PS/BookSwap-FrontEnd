@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshCo
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 import { jwtDecode } from 'jwt-decode';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importa o ícone de seta
+import Icon from 'react-native-vector-icons/Ionicons'; // Importa o ícone de seta e coração
 import CreateResenha from './CreateResenha';
 
 export default function LivroDetail({ route, navigation }) {
@@ -12,6 +12,7 @@ export default function LivroDetail({ route, navigation }) {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
+    const [curtido, setCurtido] = useState(false);
 
     const fetchLivroDetalhes = async () => {
         try {
@@ -41,6 +42,7 @@ export default function LivroDetail({ route, navigation }) {
             });
             const data = await response.json();
             setLivro(data);
+            setCurtido(data.curtidas.includes(userId));
         } catch (error) {
             console.error('Erro ao buscar detalhes do livro:', error);
         } finally {
@@ -57,6 +59,33 @@ export default function LivroDetail({ route, navigation }) {
     useEffect(() => {
         fetchLivroDetalhes();
     }, []);
+
+    const handleCurtir = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+                console.log('Token não encontrado');
+                return;
+            }
+
+            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/curtir/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                setCurtido(!curtido);
+                await fetchLivroDetalhes(); // Atualiza os dados do livro, incluindo o número de curtidas
+            } else {
+                console.error('Erro ao curtir/descurtir o livro');
+            }
+        } catch (error) {
+            console.error('Erro ao curtir/descurtir o livro:', error);
+        }
+    };
 
     if (loading && !refreshing) {
         return (
@@ -129,13 +158,21 @@ export default function LivroDetail({ route, navigation }) {
                   style={styles.ownerButton}
                   onPress={() => navigation.navigate('UserProfile', { userId: livro.perfil_id })}
                   >
-                      {/* Envolvemos o texto "Dono" e "livro.dono" em <Text> */}
                       <Text style={styles.ownerButtonText}>
                           Acessar o perfil do(a): {livro.dono}
                       </Text>
                   </TouchableOpacity>
                 )}
-
+                <View style={styles.likeContainer}>
+                    <TouchableOpacity onPress={handleCurtir}>
+                        <Icon
+                            name={curtido ? "heart" : "heart-outline"}
+                            size={30}
+                            color={curtido ? "#e74c3c" : "#fff"}
+                        />
+                    </TouchableOpacity>
+                    <Text style={styles.likeCount}>{livro.curtidas.length} curtidas</Text>
+                </View>
             </View>
         </ScrollView>
     );
@@ -221,5 +258,15 @@ const styles = StyleSheet.create({
     ownerButtonText: {
         color: '#fff',
         fontSize: 18,
+    },
+    likeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    likeCount: {
+        color: '#fff',
+        fontSize: 18,
+        marginLeft: 10,
     },
 });
