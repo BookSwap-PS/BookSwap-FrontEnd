@@ -95,6 +95,14 @@ const UserProfile = ({ route, navigation }) => {
     }
   };  
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleFollow = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -165,8 +173,8 @@ const UserProfile = ({ route, navigation }) => {
     );
   }
 
-  const { usuario, image, seguindo } = profile;
-  const { first_name, last_name, username, email } = usuario || {};
+  const { usuario, image, seguidores, seguindo, trocas, criado_em } = profile;
+  const { first_name, last_name, username } = usuario || {};
 
   return (
     <ScrollView
@@ -187,6 +195,7 @@ const UserProfile = ({ route, navigation }) => {
           <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
 
+        {/* Imagem do perfil */}
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
         ) : (
@@ -194,27 +203,35 @@ const UserProfile = ({ route, navigation }) => {
             <Text style={styles.placeholderText}>Sem Imagem</Text>
           </View>
         )}
-        <Text style={styles.name}>{first_name} {last_name}</Text>
+        {/* Nome e informações do usuário */}
         <Text style={styles.username}>@{username}</Text>
+        <Text style={styles.name}>{first_name} {last_name}</Text>
+        <Text style={styles.infoText}>desde: {formatDate(criado_em)}</Text>
+        <Text style={styles.infoText}>trocas: {trocas || 0}</Text>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.email}>{email}</Text>
-        <Text style={styles.following}>Seguindo: {seguindo?.length || 0}</Text>
+      {/* Seguidores e Seguindo */}
+      <View style={styles.followContainer}>
+        <Text style={styles.followers}>{seguidores?.length || 0} Seguidores</Text>
+        <Text style={styles.following}>{seguindo?.length || 0} Seguindo</Text>
       </View>
 
       {/* Botões de seguir/deixar de seguir dependendo do estado */}
       {!isOwner && (
-        following ? (
-          <TouchableOpacity style={styles.unfollowButton} onPress={handleUnfollow}>
-            <Text style={styles.unfollowButtonText}>Deixar de Seguir</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.followButton} onPress={handleFollow}>
-            <Text style={styles.followButtonText}>Seguir</Text>
-          </TouchableOpacity>
-        )
+        <TouchableOpacity style={following ? styles.unfollowButton : styles.followButton} onPress={following ? handleUnfollow : handleFollow}>
+          <Text style={following ? styles.unfollowButtonText : styles.followButtonText}>{following ? 'Deixar de Seguir' : 'seguir'}</Text>
+        </TouchableOpacity>
       )}
+
+      {/* Botões de histórico e livros */}
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('UserHistory', { userId })}>
+        <Icon name="time" size={20} color="#fff" />
+        <Text style={styles.actionButtonText}>Histórico</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('UserBooks', { userId })}>
+        <Icon name="book" size={20} color="#fff" />
+        <Text style={styles.actionButtonText}>Livros</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -241,16 +258,16 @@ const styles = StyleSheet.create({
     left: 10,
   },
   profileImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 2,
     borderColor: '#fff',
   },
   placeholderImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#34495e',
     alignItems: 'center',
     justifyContent: 'center',
@@ -259,56 +276,72 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  username: {
+    fontSize: 20,
+    color: '#ecf0f1',
+    marginTop: 8,
+  },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
-    marginTop: 16,
+    marginTop: 8,
   },
-  username: {
-    fontSize: 20,
+  infoText: {
+    fontSize: 16,
     color: '#ecf0f1',
-    marginBottom: 8,
+    marginTop: 4,
   },
-  infoContainer: {
-    alignItems: 'center',
-    marginTop: 24,
+  followContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginVertical: 16,
   },
-  email: {
+  followers: {
     fontSize: 18,
-    color: '#ecf0f1',
-    marginBottom: 8,
+    color: '#fff',
   },
   following: {
     fontSize: 18,
-    color: '#ecf0f1',
-    marginBottom: 24,
+    color: '#fff',
   },
   followButton: {
-    backgroundColor: '#2980b9',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+    backgroundColor: '#27ae60',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: 'center',
-    marginBottom: 20,
   },
   followButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
   },
   unfollowButton: {
     backgroundColor: '#c0392b',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: 'center',
-    marginBottom: 20,
   },
   unfollowButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b5998',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginVertical: 10,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    marginLeft: 10,
   },
 });
 
