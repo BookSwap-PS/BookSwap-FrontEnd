@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, API_DEV_URL } from '@env';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, ProgressBarAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from "jwt-decode";
 
-
 const ProfileScreen = ({ navigation }) => {
-  const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
-  const [profile, setProfile] = useState(null); // Estado para o perfil do usuário autenticado
+  const [allProfiles, setAllProfiles] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -17,27 +16,15 @@ const ProfileScreen = ({ navigation }) => {
 
   const fetchProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
+      const token = await AsyncStorage.getItem('token');
 
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
 
-      // Usando jwt-decode para decodificar o token JWT e obter o user_id
-      const decodedToken = jwtDecode(token); 
-      const authenticatedUserId = decodedToken.user_id; // Extraindo o user_id do payload
-
-      console.log('Token:', token);
-      console.log('Authenticated User ID:', authenticatedUserId);
-
-      if (!authenticatedUserId) {
-        console.log('ID do usuário não encontrado no token');
-        return;
-      }
-
-      console.log("prod: " + `${API_BASE_URL}/perfil/`);
-      console.log("dev: " + `${API_DEV_URL}/perfil/`);
+      const decodedToken = jwtDecode(token);
+      const authenticatedUserId = decodedToken.user_id;
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -50,7 +37,7 @@ const ProfileScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setAllProfiles(data); // Armazena todos os perfis no estado
+        setAllProfiles(data);
         const userProfile = data.find(profile => profile.usuario.id === parseInt(authenticatedUserId));
         if (userProfile) {
           setProfile(userProfile);
@@ -64,11 +51,10 @@ const ProfileScreen = ({ navigation }) => {
       console.log('Erro ao buscar dados do perfil:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false); // Finaliza o estado de "refresh"
+      setRefreshing(false);
     }
   };
 
-  // Função chamada quando o usuário puxa para recarregar
   const onRefresh = () => {
     setRefreshing(true);
     fetchProfileData();
@@ -76,15 +62,14 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleEditProfile = () => {
     if (profile) {
-      // Passa o perfil do usuário para a tela de edição
-      navigation.navigate('EditProfile', { profile }); 
+      navigation.navigate('EditProfile', { profile });
     } else {
       console.log('Perfil não encontrado');
     }
   };
 
   const handleViewLibrary = () => {
-    navigation.navigate('UserLibrary'); // Navega para a tela de biblioteca
+    navigation.navigate('UserLibrary');
   };
 
   if (loading && !refreshing) {
@@ -103,9 +88,9 @@ const ProfileScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#A9A9A9']} // Cor neutra (cinza)
-            tintColor={'#A9A9A9'} // Cor neutra para iOS
-            progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+            colors={['#A9A9A9']}
+            tintColor={'#A9A9A9'}
+            progressBackgroundColor={'#F5F5F5'}
           />
         }
       >
@@ -114,8 +99,13 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { id, usuario, image, seguindo } = profile;
+  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
   const { first_name, last_name, username, email } = usuario;
+
+  // Calcular nível e progresso para o próximo nível
+  const level = Math.floor(pontuacao / 100);
+  const pointsToNextLevel = 100 - (pontuacao % 100);
+  const progress = (pontuacao % 100) / 100;
 
   return (
     <ScrollView
@@ -124,9 +114,9 @@ const ProfileScreen = ({ navigation }) => {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          colors={['#A9A9A9']} // Cor neutra (cinza)
-          tintColor={'#A9A9A9'} // Cor neutra para iOS
-          progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+          colors={['#A9A9A9']}
+          tintColor={'#A9A9A9'}
+          progressBackgroundColor={'#F5F5F5'}
         />
       }
     >
@@ -147,12 +137,23 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
       </View>
 
-      {/* Botão para editar o perfil */}
+      <View style={styles.gamificationContainer}>
+        <Text style={styles.levelText}>Nível: {level}</Text>
+        <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
+        <ProgressBarAndroid
+          styleAttr="Horizontal"
+          indeterminate={false}
+          progress={progress}
+          color="#ffd700"
+          style={styles.progressBar}
+        />
+        <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
+      </View>
+
       <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
         <Text style={styles.editButtonText}>Editar Perfil</Text>
       </TouchableOpacity>
 
-      {/* Botão para ver a Biblioteca do usuário */}
       <TouchableOpacity style={styles.libraryButton} onPress={handleViewLibrary}>
         <Text style={styles.libraryButtonText}>Minha Biblioteca</Text>
       </TouchableOpacity>
@@ -175,6 +176,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: 32,
+    marginBottom: 24, // Espaço entre o header e o restante do conteúdo
   },
   profileImage: {
     width: 140,
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#34495e',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16, // Espaço abaixo do placeholder
   },
   placeholderText: {
     color: '#fff',
@@ -204,11 +207,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 20,
     color: '#ecf0f1',
-    marginBottom: 8,
+    marginBottom: 16, // Espaço abaixo do username
   },
   infoContainer: {
     alignItems: 'center',
-    marginTop: 24,
+    marginBottom: 32, // Espaço maior entre infoContainer e gamification
   },
   email: {
     fontSize: 18,
@@ -219,6 +222,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ecf0f1',
     marginBottom: 24,
+  },
+  gamificationContainer: {
+    marginTop: 16,
+    marginBottom: 32, // Espaço maior entre gamification e botões
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 20,
+    color: '#ffd700',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  pointsText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginBottom: 8,
+  },
+  progressBar: {
+    width: '100%',
+    height: 10,
+    marginBottom: 8,
+  },
+  nextLevelText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginTop: 8,
   },
   editButton: {
     backgroundColor: '#2980b9',
@@ -239,6 +269,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignSelf: 'center',
+    marginBottom: 20,
   },
   libraryButtonText: {
     color: '#fff',

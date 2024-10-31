@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_DEV_URL } from '@env';
-import { jwtDecode } from 'jwt-decode'; // Removi as chaves para importar corretamente
-import Icon from 'react-native-vector-icons/Ionicons'; // Certifique-se de ter esta biblioteca instalada
+import { API_DEV_URL } from '@env';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const UserProfile = ({ route, navigation }) => {
-  const { userId } = route.params; // Pega o ID do perfil passado pela navegação
+  const { userId } = route.params; // ID do perfil passado pela navegação
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [following, setFollowing] = useState(false);
   const [isOwner, setIsOwner] = useState(false); // Verifica se é o usuário autenticado
-  const [authenticatedUserId, setAuthenticatedUserId] = useState(null);
 
   useEffect(() => {
     fetchUserProfile();
@@ -22,27 +20,15 @@ const UserProfile = ({ route, navigation }) => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
-      
+
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
-    
-      // Decodificando o token para obter o ID do usuário autenticado
-      const decodedToken = jwtDecode(token);
-      const userLogId = decodedToken.user_id;
-    
-      if (!userLogId) {
-        console.log("Usuário não encontrado");
-        return;
-      }
-    
-      console.log("ID do usuário autenticado:", userLogId);
-      setAuthenticatedUserId(userLogId);
-    
-      const viewingUserId = parseInt(userId);
-      console.log("ID do perfil sendo visualizado:", viewingUserId);
-    
+
+      const authenticatedUserId = await AsyncStorage.getItem('user_id');
+      const viewingUserId = String(userId);
+
       const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
         method: 'GET',
         headers: {
@@ -51,39 +37,14 @@ const UserProfile = ({ route, navigation }) => {
         },
       });
 
-      const response2 = await fetch(`${API_DEV_URL}/perfil/${userLogId}/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-    
       const data = await response.json();
-      const data2 = await response2.json();
-    
-      if (response.ok && response2.ok) {
-        setProfile(data);
-    
-        // Verifica se o perfil que está sendo exibido é o do usuário autenticado
-        setIsOwner(viewingUserId === String(userLogId));
-    
-        // Verifica se o perfil já está sendo seguido usando a lista de IDs
-        console.log("Dados do perfil:", data);
-    
-        if (data2.seguindo && Array.isArray(data2.seguindo)) {
-          // Verifica se o ID do perfil visualizado está na lista `data.seguindo`
-          const isFollowing = data2.seguindo.includes(viewingUserId);
-          console.log("data.seguindo: ", data2.seguindo)
-          console.log("viewingUserId: ", viewingUserId)
 
-          setFollowing(isFollowing);
-          console.log("Estado following:", isFollowing); // Adicionado console.log para verificação
-        } else {
-          setFollowing(false);
-          console.log("Estado following:", false); // Adicionado console.log para verificação
+      if (response.ok) {
+        setProfile(data);
+        if (authenticatedUserId) {
+          setIsOwner(viewingUserId === String(authenticatedUserId));
         }
-    
+        setFollowing(data.is_following || false);
       } else {
         console.log('Erro ao buscar perfil do usuário:', data);
       }
@@ -93,9 +54,11 @@ const UserProfile = ({ route, navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };  
+  };
 
+  // Função para formatar a data no formato "dd/mm/yyyy"
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -173,8 +136,13 @@ const UserProfile = ({ route, navigation }) => {
     );
   }
 
-  const { usuario, image, seguidores, seguindo, trocas, criado_em } = profile;
+  const { usuario, image, seguidores, seguindo, trocas, pontuacao, criado_em } = profile;
   const { first_name, last_name, username } = usuario || {};
+
+  // Calcular nível e progresso para o próximo nível
+  const level = Math.floor((pontuacao || 0) / 100);
+  const pointsToNextLevel = 100 - ((pontuacao || 0) % 100);
+  const progress = ((pontuacao || 0) % 100) / 100;
 
   return (
     <ScrollView
@@ -190,12 +158,10 @@ const UserProfile = ({ route, navigation }) => {
       }
     >
       <View style={styles.header}>
-        {/* Botão de voltar */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
 
-        {/* Imagem do perfil */}
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
         ) : (
@@ -203,34 +169,43 @@ const UserProfile = ({ route, navigation }) => {
             <Text style={styles.placeholderText}>Sem Imagem</Text>
           </View>
         )}
-        {/* Nome e informações do usuário */}
         <Text style={styles.username}>@{username}</Text>
         <Text style={styles.name}>{first_name} {last_name}</Text>
         <Text style={styles.infoText}>desde: {formatDate(criado_em)}</Text>
         <Text style={styles.infoText}>trocas: {trocas || 0}</Text>
       </View>
 
-      {/* Seguidores e Seguindo */}
       <View style={styles.followContainer}>
         <Text style={styles.followers}>{seguidores?.length || 0} Seguidores</Text>
         <Text style={styles.following}>{seguindo?.length || 0} Seguindo</Text>
       </View>
 
-      {/* Botões de seguir/deixar de seguir dependendo do estado */}
       {!isOwner && (
         <TouchableOpacity style={following ? styles.unfollowButton : styles.followButton} onPress={following ? handleUnfollow : handleFollow}>
-          <Text style={following ? styles.unfollowButtonText : styles.followButtonText}>{following ? 'Deixar de Seguir' : 'seguir'}</Text>
+          <Text style={following ? styles.unfollowButtonText : styles.followButtonText}>{following ? 'Deixar de Seguir' : 'Seguir'}</Text>
         </TouchableOpacity>
       )}
 
-      {/* Botões de histórico e livros */}
+      <View style={styles.gamificationContainer}>
+        <Text style={styles.levelText}>Nível: {level}</Text>
+        <Text style={styles.pointsText}>Pontuação: {pontuacao || 0} pontos</Text>
+        <View style={styles.progressBar}>
+          <View style={{ ...styles.progress, width: `${progress * 100}%` }} />
+        </View>
+        <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
+      </View>
+
+      <TouchableOpacity 
+        style={styles.actionButton} 
+        onPress={() => navigation.navigate(isOwner ? 'UserLibrary' : 'OtherUserLibrary', { userId })}
+      >
+        <Icon name="book" size={20} color="#fff" />
+        <Text style={styles.actionButtonText}>{isOwner ? 'Minha Biblioteca' : 'Biblioteca'}</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('UserHistory', { userId })}>
         <Icon name="time" size={20} color="#fff" />
         <Text style={styles.actionButtonText}>Histórico</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('UserBooks', { userId })}>
-        <Icon name="book" size={20} color="#fff" />
-        <Text style={styles.actionButtonText}>Livros</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -327,6 +302,36 @@ const styles = StyleSheet.create({
   unfollowButtonText: {
     color: '#fff',
     fontSize: 18,
+  },
+  gamificationContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 20,
+    color: '#ffd700',
+    fontWeight: 'bold',
+  },
+  pointsText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginBottom: 8,
+  },
+  progressBar: {
+    width: '80%',
+    height: 10,
+    backgroundColor: '#34495e',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progress: {
+    height: '100%',
+    backgroundColor: '#ffd700',
+  },
+  nextLevelText: {
+    fontSize: 16,
+    color: '#ecf0f1',
   },
   actionButton: {
     flexDirection: 'row',
