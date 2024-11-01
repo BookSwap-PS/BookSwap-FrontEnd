@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 import {
   View,
   Text,
@@ -29,36 +29,82 @@ export default function OtherUserLibraryScreen({ route }) {
   const { userId } = route.params; // ID do usuário cujos livros serão exibidos
   const [livros, setLivros] = useState<Livro[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // Estado para refresh
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
   const fetchOtherUserBooks = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`${API_DEV_URL}/livro/?usuario=${userId}`, {
+      const apiUrl = API_BASE_URL || API_DEV_URL;
+      const requestUrl = `${apiUrl}/livro/?perfil=${userId}`; // Agora busca pelo perfil
+  
+      console.log('Request URL:', requestUrl); // Verifica a URL completa
+  
+      const response = await fetch(requestUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`, // Passa o token do usuário autenticado
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
+  
       const data = await response.json();
-      setLivros(data);
+      console.log('Fetched books data:', data);
+  
+      if (Array.isArray(data)) {
+        setLivros(data);
+      } else {
+        console.log('Erro ao buscar livros do usuário:', data);
+      }
     } catch (error) {
       console.error('Erro ao buscar livros do usuário:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+  
+  const refreshToken = async () => {
+    try {
+      const refreshToken = await AsyncStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        console.log('Refresh token não encontrado');
+        return false;
+      }
+
+      const apiUrl = API_BASE_URL || API_DEV_URL;
+      const response = await fetch(`${apiUrl}/token/refresh/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Token renovado com sucesso:', data);
+        await AsyncStorage.setItem('token', data.access);
+        return true;
+      } else {
+        console.log('Erro ao renovar o token');
+        return false;
+      }
+    } catch (error) {
+      console.error('Erro ao renovar o token:', error);
+      return false;
     }
   };
 
   const onRefresh = async () => {
-    setRefreshing(true); // Inicia o estado de refresh
-    await fetchOtherUserBooks(); // Busca os dados novamente
-    setRefreshing(false); // Finaliza o estado de refresh
+    setRefreshing(true);
+    await fetchOtherUserBooks();
+    setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchOtherUserBooks(); // Carrega os livros do outro usuário ao montar o componente
+    fetchOtherUserBooks();
   }, []);
 
   const renderItem = ({ item }: { item: Livro }) => (
@@ -96,7 +142,7 @@ export default function OtherUserLibraryScreen({ route }) {
         contentContainerStyle={styles.listContent}
         numColumns={2}
         columnWrapperStyle={styles.row}
-        refreshControl={ // Adiciona a funcionalidade de "pull to refresh"
+        refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}

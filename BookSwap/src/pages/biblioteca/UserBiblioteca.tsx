@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_DEV_URL } from '@env'; // Use a URL correta para o desenvolvimento
+import { API_BASE_URL, API_DEV_URL } from '@env'; // Importa as URLs de produção e desenvolvimento
 import {
     View,
     Text,
@@ -9,11 +9,10 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     RefreshControl,
-    Button
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importa o ícone Ionicons
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Livro {
     id: number;
@@ -37,10 +36,11 @@ export default function UserLibraryScreen() {
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('token');
-            const response = await fetch(`${API_DEV_URL}/livro/?meus_livros=true`, {
+            const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre API_BASE_URL e API_DEV_URL
+            const response = await fetch(`${apiUrl}/livro/?meus_livros=true`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,  // Passa o token do usuário autenticado
+                    'Authorization': `Bearer ${token}`, // Passa o token do usuário autenticado
                 },
             });
             const data = await response.json();
@@ -59,7 +59,7 @@ export default function UserLibraryScreen() {
     };
 
     useEffect(() => {
-        fetchUserBooks();  // Carrega os livros do usuário ao montar o componente
+        fetchUserBooks(); // Carrega os livros do usuário ao montar o componente
     }, []);
 
     const renderItem = ({ item }: { item: Livro }) => (

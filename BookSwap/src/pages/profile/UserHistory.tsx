@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_DEV_URL } from '@env';
-import Icon from 'react-native-vector-icons/Ionicons'; // Certifique-se de ter esta biblioteca instalada
+import { API_BASE_URL, API_DEV_URL } from '@env';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { RouteProp } from '@react-navigation/native';
 
 interface Troca {
@@ -38,7 +38,8 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
         return;
       }
 
-      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/historico-trocas/`, {
+      const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre produção e desenvolvimento
+      const response = await fetch(`${apiUrl}/perfil/${userId}/historico-trocas/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -71,7 +72,7 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#2980b9" />
       </View>
     );
   }
@@ -92,7 +93,7 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.historyItem}>
-            <Icon name="book-outline" size={20} color="#000" />
+            <Icon name="book-outline" size={20} color="#fff" />
             <View style={styles.historyDetails}>
               <Text style={styles.bookTitle}>{item.livro}</Text>
               <Text style={styles.infoText}>Solicitante: {item.solicitante}</Text>
@@ -112,23 +113,25 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1A2B45',
     padding: 16,
   },
   loadingContainer: {
     flex: 1,
+    backgroundColor: '#1A2B45',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginBottom: 16,
+    textAlign: 'center',
   },
   noHistoryText: {
     fontSize: 18,
-    color: '#888',
+    color: '#A9A9A9',
     textAlign: 'center',
     marginTop: 20,
   },
@@ -136,7 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2A3B5F',
     borderRadius: 8,
     marginBottom: 10,
     shadowColor: '#000',
@@ -151,11 +154,11 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   infoText: {
     fontSize: 16,
-    color: '#555',
+    color: '#D3D3D3',
   },
 });
 

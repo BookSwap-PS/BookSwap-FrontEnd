@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, API_DEV_URL } from '@env';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, ProgressBarAndroid } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from 'jwt-decode';
+import * as Progress from 'react-native-progress';
 
-const ProfileScreen = ({ navigation }) => {
-  const [allProfiles, setAllProfiles] = useState([]);
+const UserProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchProfileData();
+    fetchUserProfile();
   }, []);
 
-  const fetchProfileData = async () => {
+  const fetchUserProfile = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
 
@@ -25,8 +25,12 @@ const ProfileScreen = ({ navigation }) => {
 
       const decodedToken = jwtDecode(token);
       const authenticatedUserId = decodedToken.user_id;
+      console.log('Authenticated User ID:', authenticatedUserId);
+      const apiUrl = API_BASE_URL || API_DEV_URL;
 
-      const response = await fetch(`${API_DEV_URL}/perfil/`, {
+      // Buscar perfil associado ao usuário autenticado
+      console.log('Fetching profile for user ID:', authenticatedUserId);
+      const response = await fetch(`${apiUrl}/perfil/?usuario=${authenticatedUserId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -35,14 +39,15 @@ const ProfileScreen = ({ navigation }) => {
       });
 
       const data = await response.json();
+      console.log('Fetched profile data:', data);
 
-      if (response.ok) {
-        setAllProfiles(data);
-        const userProfile = data.find(profile => profile.usuario.id === parseInt(authenticatedUserId));
-        if (userProfile) {
-          setProfile(userProfile);
+      // Verifique se o perfil retornado é o correto
+      if (response.ok && Array.isArray(data) && data.length > 0) {
+        const correctProfile = data.find(profile => profile.usuario.id === authenticatedUserId);
+        if (correctProfile) {
+          setProfile(correctProfile);
         } else {
-          console.log('Perfil do usuário autenticado não encontrado');
+          console.log('Perfil correspondente ao usuário não encontrado.');
         }
       } else {
         console.log('Erro ao buscar dados do perfil:', data);
@@ -57,7 +62,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchProfileData();
+    fetchUserProfile();
   };
 
   const handleEditProfile = () => {
@@ -99,7 +104,7 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
+  const { usuario, image, seguindo, pontuacao = 0 } = profile;
   const { first_name, last_name, username, email } = usuario;
 
   // Calcular nível e progresso para o próximo nível
@@ -140,13 +145,7 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.gamificationContainer}>
         <Text style={styles.levelText}>Nível: {level}</Text>
         <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
-        <ProgressBarAndroid
-          styleAttr="Horizontal"
-          indeterminate={false}
-          progress={progress}
-          color="#ffd700"
-          style={styles.progressBar}
-        />
+        <Progress.Bar progress={progress} width={300} color="#ffd700" style={styles.progressBar} />
         <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
@@ -176,7 +175,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: 32,
-    marginBottom: 24, // Espaço entre o header e o restante do conteúdo
+    marginBottom: 24,
   },
   profileImage: {
     width: 140,
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#34495e',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16, // Espaço abaixo do placeholder
+    marginBottom: 16,
   },
   placeholderText: {
     color: '#fff',
@@ -207,11 +206,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 20,
     color: '#ecf0f1',
-    marginBottom: 16, // Espaço abaixo do username
+    marginBottom: 16,
   },
   infoContainer: {
     alignItems: 'center',
-    marginBottom: 32, // Espaço maior entre infoContainer e gamification
+    marginBottom: 32,
   },
   email: {
     fontSize: 18,
@@ -225,7 +224,7 @@ const styles = StyleSheet.create({
   },
   gamificationContainer: {
     marginTop: 16,
-    marginBottom: 32, // Espaço maior entre gamification e botões
+    marginBottom: 32,
     paddingHorizontal: 16,
     alignItems: 'center',
   },
@@ -241,8 +240,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressBar: {
-    width: '100%',
-    height: 10,
     marginBottom: 8,
   },
   nextLevelText: {
@@ -282,4 +279,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default UserProfileScreen;

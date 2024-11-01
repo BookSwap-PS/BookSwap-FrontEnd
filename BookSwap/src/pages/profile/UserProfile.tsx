@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_DEV_URL } from '@env';
+import { API_DEV_URL, API_BASE_URL } from '@env';
 import Icon from 'react-native-vector-icons/Ionicons';
+import * as Progress from 'react-native-progress';
 
 const UserProfile = ({ route, navigation }) => {
   const { userId } = route.params;
@@ -29,8 +30,9 @@ const UserProfile = ({ route, navigation }) => {
   
       const authenticatedUserId = await AsyncStorage.getItem('user_id');
       const viewingUserId = String(userId);
+      const apiUrl = process.env.NODE_ENV === 'development' ? API_DEV_URL : API_BASE_URL;
   
-      const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
+      const response = await fetch(`${apiUrl}/perfil/${viewingUserId}/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -67,7 +69,8 @@ const UserProfile = ({ route, navigation }) => {
             return;
         }
 
-        const response = await fetch(`${API_DEV_URL}/perfil/${userId}/seguir/`, {
+        const apiUrl = process.env.NODE_ENV === 'development' ? API_DEV_URL : API_BASE_URL;
+        const response = await fetch(`${apiUrl}/perfil/${userId}/seguir/`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -102,7 +105,8 @@ const handleUnfollow = async () => {
             return;
         }
 
-        const response = await fetch(`${API_DEV_URL}/perfil/${userId}/deixar_de_seguir/`, {
+        const apiUrl = process.env.NODE_ENV === 'development' ? API_DEV_URL : API_BASE_URL;
+        const response = await fetch(`${apiUrl}/perfil/${userId}/deixar_de_seguir/`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -215,9 +219,7 @@ const handleUnfollow = async () => {
       <View style={styles.gamificationContainer}>
         <Text style={styles.levelText}>Nível: {level}</Text>
         <Text style={styles.pointsText}>Pontuação: {pontuacao || 0} pontos</Text>
-        <View style={styles.progressBar}>
-          <View style={{ ...styles.progress, width: `${progress * 100}%` }} />
-        </View>
+        <Progress.Bar progress={progress} width={300} color="#ffd700" style={styles.progressBar} />
         <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
@@ -344,16 +346,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressBar: {
-    width: '80%',
-    height: 10,
-    backgroundColor: '#34495e',
-    borderRadius: 5,
-    overflow: 'hidden',
     marginBottom: 8,
-  },
-  progress: {
-    height: '100%',
-    backgroundColor: '#ffd700',
   },
   nextLevelText: {
     fontSize: 16,

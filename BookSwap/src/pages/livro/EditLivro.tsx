@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, ScrollView, Platform, Switch } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { API_DEV_URL } from '@env';
+import { API_BASE_URL, API_DEV_URL } from '@env';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -34,7 +34,8 @@ const EditLivro = ({ route, navigation }) => {
                 return;
             }
 
-            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
+            const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre produção e desenvolvimento
+            const response = await fetch(`${apiUrl}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -115,7 +116,8 @@ const EditLivro = ({ route, navigation }) => {
                 });
             }
 
-            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
+            const apiUrl = API_BASE_URL || API_DEV_URL;
+            const response = await fetch(`${apiUrl}/livro/${livroId}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -209,7 +211,7 @@ const EditLivro = ({ route, navigation }) => {
                         mode="date"
                         display="default"
                         onChange={(event, selectedDate) => handleDateChange(event, selectedDate)}
-                        maximumDate={new Date()} // Limita a data ao dia atual
+                        maximumDate={new Date()}
                     />
                 )}
 
