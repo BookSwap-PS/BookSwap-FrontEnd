@@ -5,30 +5,31 @@ import { API_DEV_URL } from '@env';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const UserProfile = ({ route, navigation }) => {
-  const { userId } = route.params; // ID do perfil passado pela navegação
+  const { userId } = route.params;
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [following, setFollowing] = useState(false);
-  const [isOwner, setIsOwner] = useState(false); // Verifica se é o usuário autenticado
+  const [isOwner, setIsOwner] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, [userId]);
 
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
-
+  
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
-
+  
       const authenticatedUserId = await AsyncStorage.getItem('user_id');
       const viewingUserId = String(userId);
-
+  
       const response = await fetch(`${API_DEV_URL}/perfil/${viewingUserId}/`, {
         method: 'GET',
         headers: {
@@ -36,15 +37,15 @@ const UserProfile = ({ route, navigation }) => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         setProfile(data);
         if (authenticatedUserId) {
           setIsOwner(viewingUserId === String(authenticatedUserId));
         }
-        setFollowing(data.is_following || false);
+        setFollowing(data.is_following !== undefined ? data.is_following : false);
       } else {
         console.log('Erro ao buscar perfil do usuário:', data);
       }
@@ -55,8 +56,77 @@ const UserProfile = ({ route, navigation }) => {
       setRefreshing(false);
     }
   };
+  
+  const handleFollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+            console.log('Token não encontrado para seguir');
+            return;
+        }
 
-  // Função para formatar a data no formato "dd/mm/yyyy"
+        const response = await fetch(`${API_DEV_URL}/perfil/${userId}/seguir/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            setFollowing(true);
+            fetchUserProfile(); // Atualizar o perfil após seguir
+            Alert.alert('Sucesso', 'Você agora está seguindo esse usuário.');
+        } else {
+            const errorData = await response.json();
+            Alert.alert('Erro', `Erro ao seguir o usuário: ${errorData.detail || 'Tente novamente mais tarde.'}`);
+            console.log('Erro ao seguir o usuário:', errorData);
+        }
+    } catch (error) {
+        console.log('Erro ao tentar seguir o usuário:', error);
+        Alert.alert('Erro', 'Erro ao tentar seguir o usuário. Por favor, tente novamente mais tarde.');
+    } finally {
+        setFollowLoading(false);
+    }
+};
+
+const handleUnfollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+            console.log('Token não encontrado para deixar de seguir');
+            return;
+        }
+
+        const response = await fetch(`${API_DEV_URL}/perfil/${userId}/deixar_de_seguir/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            setFollowing(false);
+            fetchUserProfile(); // Atualizar o perfil após deixar de seguir
+            Alert.alert('Sucesso', 'Você deixou de seguir este usuário.');
+        } else {
+            const errorData = await response.json();
+            Alert.alert('Erro', `Erro ao deixar de seguir: ${errorData.detail || 'Tente novamente mais tarde.'}`);
+            console.log('Erro ao deixar de seguir o usuário:', errorData);
+        }
+    } catch (error) {
+        console.log('Erro ao tentar deixar de seguir o usuário:', error);
+        Alert.alert('Erro', 'Erro ao tentar deixar de seguir o usuário. Por favor, tente novamente mais tarde.');
+    } finally {
+        setFollowLoading(false);
+    }
+};
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -66,59 +136,7 @@ const UserProfile = ({ route, navigation }) => {
     return `${day}/${month}/${year}`;
   };
 
-  const handleFollow = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        console.log('Token não encontrado para seguir');
-        return;
-      }
-
-      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/seguir/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setFollowing(true);
-        Alert.alert('Sucesso', 'Você agora está seguindo esse usuário.');
-      } else {
-        console.log('Erro ao seguir o usuário.');
-      }
-    } catch (error) {
-      console.log('Erro ao tentar seguir o usuário:', error);
-    }
-  };
-
-  const handleUnfollow = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        console.log('Token não encontrado para deixar de seguir');
-        return;
-      }
-
-      const response = await fetch(`${API_DEV_URL}/perfil/${userId}/deixar_de_seguir/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setFollowing(false);
-        Alert.alert('Sucesso', 'Você deixou de seguir este usuário.');
-      } else {
-        console.log('Erro ao deixar de seguir o usuário.');
-      }
-    } catch (error) {
-      console.log('Erro ao tentar deixar de seguir o usuário:', error);
-    }
-  };
+  console.log("Following status:", following);
 
   if (loading) {
     return (
@@ -139,7 +157,6 @@ const UserProfile = ({ route, navigation }) => {
   const { usuario, image, seguidores, seguindo, trocas, pontuacao, criado_em } = profile;
   const { first_name, last_name, username } = usuario || {};
 
-  // Calcular nível e progresso para o próximo nível
   const level = Math.floor((pontuacao || 0) / 100);
   const pointsToNextLevel = 100 - ((pontuacao || 0) % 100);
   const progress = ((pontuacao || 0) % 100) / 100;
@@ -150,7 +167,10 @@ const UserProfile = ({ route, navigation }) => {
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={fetchUserProfile}
+          onRefresh={() => {
+            setRefreshing(true);
+            fetchUserProfile();
+          }}
           colors={['#A9A9A9']}
           tintColor={'#A9A9A9'}
           progressBackgroundColor={'#F5F5F5'}
@@ -181,8 +201,14 @@ const UserProfile = ({ route, navigation }) => {
       </View>
 
       {!isOwner && (
-        <TouchableOpacity style={following ? styles.unfollowButton : styles.followButton} onPress={following ? handleUnfollow : handleFollow}>
-          <Text style={following ? styles.unfollowButtonText : styles.followButtonText}>{following ? 'Deixar de Seguir' : 'Seguir'}</Text>
+        <TouchableOpacity
+          style={following ? styles.unfollowButton : styles.followButton}
+          onPress={following ? handleUnfollow : handleFollow}
+          disabled={followLoading}
+        >
+          <Text style={following ? styles.unfollowButtonText : styles.followButtonText}>
+            {following ? 'Deixar de Seguir' : 'Seguir'}
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -195,8 +221,8 @@ const UserProfile = ({ route, navigation }) => {
         <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
-      <TouchableOpacity 
-        style={styles.actionButton} 
+      <TouchableOpacity
+        style={styles.actionButton}
         onPress={() => navigation.navigate(isOwner ? 'UserLibrary' : 'OtherUserLibrary', { userId })}
       >
         <Icon name="book" size={20} color="#fff" />
