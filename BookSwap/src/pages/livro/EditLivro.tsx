@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, ScrollView, Platform, Switch } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, Image, Switch } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
 
-const EditLivro = ({ route, navigation }) => {
+export default function EditarLivro({ route, navigation }) {
     const { livroId } = route.params;
-    const [livro, setLivro] = useState(null);
     const [titulo, setTitulo] = useState('');
     const [autor, setAutor] = useState('');
     const [editora, setEditora] = useState('');
@@ -17,8 +16,8 @@ const EditLivro = ({ route, navigation }) => {
     const [paginas, setPaginas] = useState('');
     const [dataPublicacao, setDataPublicacao] = useState('');
     const [condicao, setCondicao] = useState('');
-    const [disponibilidade, setDisponibilidade] = useState(false);
     const [capa, setCapa] = useState(null);
+    const [disponibilidade, setDisponibilidade] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -29,13 +28,9 @@ const EditLivro = ({ route, navigation }) => {
     const fetchLivroData = async () => {
         try {
             const token = await AsyncStorage.getItem('token');
-            if (!token) {
-                console.log('Token não encontrado');
-                return;
-            }
+            if (!token) return;
 
-            const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre produção e desenvolvimento
-            const response = await fetch(`${apiUrl}/livro/${livroId}/`, {
+            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -45,7 +40,6 @@ const EditLivro = ({ route, navigation }) => {
 
             const data = await response.json();
             if (response.ok) {
-                setLivro(data);
                 setTitulo(data.titulo);
                 setAutor(data.autor);
                 setEditora(data.editora);
@@ -54,46 +48,20 @@ const EditLivro = ({ route, navigation }) => {
                 setPaginas(data.paginas.toString());
                 setDataPublicacao(data.dataPublicacao);
                 setCondicao(data.condicao);
-                setDisponibilidade(data.disponibilidade);
                 setCapa(data.capa);
-            } else {
-                console.log('Erro ao buscar dados do livro:', data);
+                setDisponibilidade(data.disponibilidade);
             }
         } catch (error) {
-            console.log('Erro ao buscar dados do livro:', error);
+            console.error('Erro ao buscar dados do livro:', error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleImagePick = async () => {
-        if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permissão negada', 'Precisamos de permissão para acessar suas fotos.');
-                return;
-            }
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setCapa(result.assets[0].uri);
         }
     };
 
     const handleSave = async () => {
         try {
             const token = await AsyncStorage.getItem('token');
-            if (!token) {
-                console.log('Token não encontrado');
-                return;
-            }
+            if (!token) return;
 
             const formData = new FormData();
             formData.append('titulo', titulo);
@@ -116,11 +84,11 @@ const EditLivro = ({ route, navigation }) => {
                 });
             }
 
-            const apiUrl = API_BASE_URL || API_DEV_URL;
-            const response = await fetch(`${apiUrl}/livro/${livroId}/`, {
+            const response = await fetch(`${API_DEV_URL}/livro/${livroId}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
                 },
                 body: formData,
             });
@@ -130,31 +98,40 @@ const EditLivro = ({ route, navigation }) => {
                 navigation.goBack();
             } else {
                 const data = await response.json();
-                console.log('Erro ao atualizar livro:', data);
-                Alert.alert('Erro', 'Não foi possível atualizar o livro');
+                Alert.alert('Erro', data.detail || JSON.stringify(data));
             }
         } catch (error) {
-            console.log('Erro ao atualizar livro:', error);
+            Alert.alert('Erro', `Erro ao atualizar o livro: ${error.message}`);
         }
     };
 
     const handleDateChange = (event, selectedDate) => {
         const currentDate = selectedDate || new Date();
         setShowDatePicker(Platform.OS === 'ios');
-
         const day = currentDate.getDate().toString().padStart(2, '0');
         const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
         const year = currentDate.getFullYear();
-        setDataPublicacao(`${day}-${month}-${year}`); // Ajuste para DD-MM-YYYY
+        setDataPublicacao(`${day}-${month}-${year}`);
     };
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2c3e51" />
-            </View>
-        );
-    }
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Permissão Necessária", "Você precisa permitir o acesso à galeria para selecionar uma imagem.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setCapa(result.assets[0].uri);
+        }
+    };
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -198,8 +175,6 @@ const EditLivro = ({ route, navigation }) => {
                     value={paginas}
                     onChangeText={setPaginas}
                 />
-
-                {/* Campo de Data de Publicação */}
                 <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
                     <Text style={{ color: dataPublicacao ? '#000' : '#a6a2a2' }}>
                         {dataPublicacao || 'Data de Publicação (DD-MM-YYYY)'}
@@ -210,11 +185,9 @@ const EditLivro = ({ route, navigation }) => {
                         value={new Date()}
                         mode="date"
                         display="default"
-                        onChange={(event, selectedDate) => handleDateChange(event, selectedDate)}
-                        maximumDate={new Date()}
+                        onChange={handleDateChange}
                     />
                 )}
-
                 <TextInput
                     style={styles.input}
                     placeholder="Descrição"
@@ -222,20 +195,14 @@ const EditLivro = ({ route, navigation }) => {
                     value={descricao}
                     onChangeText={setDescricao}
                 />
-
-                {/* Seção de Disponibilidade */}
                 <View style={styles.switchContainer}>
                     <Text style={styles.radioTitle}>Disponível para troca:</Text>
                     <Switch
                         value={disponibilidade}
-                        onValueChange={(value) => setDisponibilidade(value)}
+                        onValueChange={setDisponibilidade}
                     />
-                    <Text style={styles.disponibilidadeText}>
-                        {disponibilidade ? 'Disponível' : 'Indisponível'}
-                    </Text>
                 </View>
-
-                <TouchableOpacity style={styles.uploadButton} onPress={handleImagePick}>
+                <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
                     <Ionicons name="image-outline" size={24} color="#1f2a44" />
                     <Text style={styles.uploadButtonText}>Atualizar capa do livro</Text>
                 </TouchableOpacity>
@@ -265,7 +232,7 @@ const EditLivro = ({ route, navigation }) => {
             </View>
         </ScrollView>
     );
-};
+}
 
 const styles = StyleSheet.create({
     scrollContainer: {
@@ -317,17 +284,6 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         borderRadius: 10,
     },
-    switchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 15,
-    },
-    disponibilidadeText: {
-        color: '#fff',
-        marginLeft: 10,
-        fontWeight: 'bold',
-    },
     radioGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -356,6 +312,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1f2a44',
     },
+    switchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
     buttonGroup: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -383,12 +345,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: 'bold',
     },
-    loadingContainer: {
-        flex: 1,
-        backgroundColor: '#2c3e51',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
 });
-
-export default EditLivro;

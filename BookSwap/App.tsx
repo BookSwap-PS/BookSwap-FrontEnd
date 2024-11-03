@@ -29,7 +29,6 @@ export default function App() {
         <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
         <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'Minha Biblioteca', headerShown: false }} />
         <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'Perfil do Usuário', headerShown: false }} />
-        <Stack.Screen name="OtherUserLibrary" component={OtherUserLibraryScreen} options={{ title: 'Biblioteca do Usuário', headerShown: false }} />
         <Stack.Screen name="SearchUser" component={SearchUser} options={{ title: 'Buscar Usuários', headerShown: false }} />
         <Stack.Screen name="CreateResenha" component={CreateResenha} options={{ title: 'Criar Resenha', headerShown: false }} />
         <Stack.Screen name="EditLivro" component={EditLivro} options={{ title: 'Editar Livro', headerShown: false }} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_BASE_URL, API_DEV_URL } from '@env'; // Importa as URLs de produção e desenvolvimento
+import { API_DEV_URL } from '@env'; // Mantém apenas a URL para o desenvolvimento
 import {
     View,
     Text,
@@ -29,18 +29,17 @@ interface Livro {
 export default function UserLibraryScreen() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false); // Estado para refresh
+    const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation();
 
     const fetchUserBooks = async () => {
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('token');
-            const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre API_BASE_URL e API_DEV_URL
-            const response = await fetch(`${apiUrl}/livro/?meus_livros=true`, {
+            const response = await fetch(`${API_DEV_URL}/livro/?meus_livros=true`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`, // Passa o token do usuário autenticado
+                    'Authorization': `Bearer ${token}`,  // Passa o token do usuário autenticado
                 },
             });
             const data = await response.json();
@@ -53,13 +52,13 @@ export default function UserLibraryScreen() {
     };
 
     const onRefresh = async () => {
-        setRefreshing(true); // Inicia o estado de refresh
-        await fetchUserBooks(); // Busca os dados novamente
-        setRefreshing(false); // Finaliza o estado de refresh
+        setRefreshing(true);
+        await fetchUserBooks();
+        setRefreshing(false);
     };
 
     useEffect(() => {
-        fetchUserBooks(); // Carrega os livros do usuário ao montar o componente
+        fetchUserBooks();  // Carrega os livros do usuário ao montar o componente
     }, []);
 
     const renderItem = ({ item }: { item: Livro }) => (
@@ -104,7 +103,7 @@ export default function UserLibraryScreen() {
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
-                refreshControl={ // Adiciona a funcionalidade de "pull to refresh"
+                refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}

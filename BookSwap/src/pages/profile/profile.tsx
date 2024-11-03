@@ -2,35 +2,44 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { jwtDecode } from 'jwt-decode';
-import * as Progress from 'react-native-progress';
+import { jwtDecode } from "jwt-decode";
+import * as Progress from 'react-native-progress'; // Importa a biblioteca para barra de progresso
 
-const UserProfileScreen = ({ navigation }) => {
-  const [profile, setProfile] = useState(null);
+const ProfileScreen = ({ navigation }) => {
+  const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
+  const [profile, setProfile] = useState(null); // Estado para o perfil do usuário autenticado
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
 
   useEffect(() => {
-    fetchUserProfile();
+    fetchProfileData();
   }, []);
 
-  const fetchUserProfile = async () => {
+  const fetchProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
 
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
 
-      const decodedToken = jwtDecode(token);
-      const authenticatedUserId = decodedToken.user_id;
-      console.log('Authenticated User ID:', authenticatedUserId);
-      const apiUrl = API_BASE_URL || API_DEV_URL;
+      // Usando jwt-decode para decodificar o token JWT e obter o user_id
+      const decodedToken = jwtDecode(token); 
+      const authenticatedUserId = decodedToken.user_id; // Extraindo o user_id do payload
 
-      // Buscar perfil associado ao usuário autenticado
-      console.log('Fetching profile for user ID:', authenticatedUserId);
-      const response = await fetch(`${apiUrl}/perfil/?usuario=${authenticatedUserId}`, {
+      console.log('Token:', token);
+      console.log('Authenticated User ID:', authenticatedUserId);
+
+      if (!authenticatedUserId) {
+        console.log('ID do usuário não encontrado no token');
+        return;
+      }
+
+      console.log("prod: " + `${API_BASE_URL}/perfil/`);
+      console.log("dev: " + `${API_DEV_URL}/perfil/`);
+
+      const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -39,15 +48,14 @@ const UserProfileScreen = ({ navigation }) => {
       });
 
       const data = await response.json();
-      console.log('Fetched profile data:', data);
 
-      // Verifique se o perfil retornado é o correto
-      if (response.ok && Array.isArray(data) && data.length > 0) {
-        const correctProfile = data.find(profile => profile.usuario.id === authenticatedUserId);
-        if (correctProfile) {
-          setProfile(correctProfile);
+      if (response.ok) {
+        setAllProfiles(data); // Armazena todos os perfis no estado
+        const userProfile = data.find(profile => profile.usuario.id === parseInt(authenticatedUserId));
+        if (userProfile) {
+          setProfile(userProfile);
         } else {
-          console.log('Perfil correspondente ao usuário não encontrado.');
+          console.log('Perfil do usuário autenticado não encontrado');
         }
       } else {
         console.log('Erro ao buscar dados do perfil:', data);
@@ -56,25 +64,27 @@ const UserProfileScreen = ({ navigation }) => {
       console.log('Erro ao buscar dados do perfil:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      setRefreshing(false); // Finaliza o estado de "refresh"
     }
   };
 
+  // Função chamada quando o usuário puxa para recarregar
   const onRefresh = () => {
     setRefreshing(true);
-    fetchUserProfile();
+    fetchProfileData();
   };
 
   const handleEditProfile = () => {
     if (profile) {
-      navigation.navigate('EditProfile', { profile });
+      // Passa o perfil do usuário para a tela de edição
+      navigation.navigate('EditProfile', { profile }); 
     } else {
       console.log('Perfil não encontrado');
     }
   };
 
   const handleViewLibrary = () => {
-    navigation.navigate('UserLibrary');
+    navigation.navigate('UserLibrary'); // Navega para a tela de biblioteca
   };
 
   if (loading && !refreshing) {
@@ -93,9 +103,9 @@ const UserProfileScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#A9A9A9']}
-            tintColor={'#A9A9A9'}
-            progressBackgroundColor={'#F5F5F5'}
+            colors={['#A9A9A9']} // Cor neutra (cinza)
+            tintColor={'#A9A9A9'} // Cor neutra para iOS
+            progressBackgroundColor={'#F5F5F5'} // Fundo neutro
           />
         }
       >
@@ -104,10 +114,10 @@ const UserProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { usuario, image, seguindo, pontuacao = 0 } = profile;
+  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
   const { first_name, last_name, username, email } = usuario;
 
-  // Calcular nível e progresso para o próximo nível
+  // Cálculo do nível e progresso para o próximo nível
   const level = Math.floor(pontuacao / 100);
   const pointsToNextLevel = 100 - (pontuacao % 100);
   const progress = (pontuacao % 100) / 100;
@@ -119,9 +129,9 @@ const UserProfileScreen = ({ navigation }) => {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          colors={['#A9A9A9']}
-          tintColor={'#A9A9A9'}
-          progressBackgroundColor={'#F5F5F5'}
+          colors={['#A9A9A9']} // Cor neutra (cinza)
+          tintColor={'#A9A9A9'} // Cor neutra para iOS
+          progressBackgroundColor={'#F5F5F5'} // Fundo neutro
         />
       }
     >
@@ -142,6 +152,7 @@ const UserProfileScreen = ({ navigation }) => {
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
       </View>
 
+      {/* Gamificação - Exibição do nível e progresso */}
       <View style={styles.gamificationContainer}>
         <Text style={styles.levelText}>Nível: {level}</Text>
         <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
@@ -149,10 +160,12 @@ const UserProfileScreen = ({ navigation }) => {
         <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
+      {/* Botão para editar o perfil */}
       <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
         <Text style={styles.editButtonText}>Editar Perfil</Text>
       </TouchableOpacity>
 
+      {/* Botão para ver a Biblioteca do usuário */}
       <TouchableOpacity style={styles.libraryButton} onPress={handleViewLibrary}>
         <Text style={styles.libraryButtonText}>Minha Biblioteca</Text>
       </TouchableOpacity>
@@ -175,7 +188,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: 32,
-    marginBottom: 24,
   },
   profileImage: {
     width: 140,
@@ -191,7 +203,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#34495e',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
   },
   placeholderText: {
     color: '#fff',
@@ -206,11 +217,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 20,
     color: '#ecf0f1',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   infoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginTop: 24,
   },
   email: {
     fontSize: 18,
@@ -266,7 +277,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignSelf: 'center',
-    marginBottom: 20,
   },
   libraryButtonText: {
     color: '#fff',
@@ -279,4 +289,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UserProfileScreen;
+export default ProfileScreen;
