@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_DEV_URL } from '@env'; // Use a URL correta para o desenvolvimento
+import { API_DEV_URL } from '@env'; // Mantém apenas a URL para o desenvolvimento
 import {
     View,
     Text,
@@ -8,10 +8,11 @@ import {
     Image,
     ActivityIndicator,
     TouchableOpacity,
-    RefreshControl, 
+    RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Livro {
     id: number;
@@ -28,7 +29,7 @@ interface Livro {
 export default function UserLibraryScreen() {
     const [livros, setLivros] = useState<Livro[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false); // Estado para refresh
+    const [refreshing, setRefreshing] = useState(false);
     const navigation = useNavigation();
 
     const fetchUserBooks = async () => {
@@ -51,9 +52,9 @@ export default function UserLibraryScreen() {
     };
 
     const onRefresh = async () => {
-        setRefreshing(true); // Inicia o estado de refresh
-        await fetchUserBooks(); // Busca os dados novamente
-        setRefreshing(false); // Finaliza o estado de refresh
+        setRefreshing(true);
+        await fetchUserBooks();
+        setRefreshing(false);
     };
 
     useEffect(() => {
@@ -61,20 +62,28 @@ export default function UserLibraryScreen() {
     }, []);
 
     const renderItem = ({ item }: { item: Livro }) => (
-        <TouchableOpacity
-            style={styles.bookCard}
-            onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
-        >
-            <Text style={styles.bookTitle}>{item.titulo}</Text>
-            {item.capa ? (
-                <Image source={{ uri: item.capa }} style={styles.bookImage} />
-            ) : (
-                <Text style={styles.noImageText}>Sem capa disponível</Text>
-            )}
-            <Text>Autor: {item.autor}</Text>
-            <Text>Páginas: {item.paginas}</Text>
-            <Text>Editora: {item.editora}</Text>
-        </TouchableOpacity>
+        <View style={styles.bookCard}>
+            <TouchableOpacity
+                onPress={() => navigation.navigate('LivroDetail', { livroId: item.id })}
+            >
+                <Text style={styles.bookTitle}>{item.titulo}</Text>
+                {item.capa ? (
+                    <Image source={{ uri: item.capa }} style={styles.bookImage} />
+                ) : (
+                    <Text style={styles.noImageText}>Sem capa disponível</Text>
+                )}
+                <Text>Autor: {item.autor}</Text>
+                <Text>Páginas: {item.paginas}</Text>
+                <Text>Editora: {item.editora}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate('EditLivro', { livroId: item.id })}
+            >
+                <Icon name="pencil" size={20} color="#fff" />
+                <Text style={styles.editButtonText}>Editar</Text>
+            </TouchableOpacity>
+        </View>
     );
 
     if (loading) {
@@ -94,7 +103,7 @@ export default function UserLibraryScreen() {
                 contentContainerStyle={styles.listContent}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
-                refreshControl={ // Adiciona a funcionalidade de "pull to refresh"
+                refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
@@ -139,6 +148,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 2,
+        marginBottom: 10,
     },
     bookTitle: {
         fontSize: 16,
@@ -163,7 +173,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#3b5998', 
+        backgroundColor: '#3b5998',
         borderRadius: 10,
         padding: 20,
         marginVertical: 20,
@@ -173,5 +183,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    editButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#2980b9',
+        paddingVertical: 8,
+        borderRadius: 8,
+        marginTop: 10,
+    },
+    editButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 5,
     },
 });
