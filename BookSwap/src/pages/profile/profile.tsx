@@ -3,7 +3,7 @@ import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from "jwt-decode";
-
+import * as Progress from 'react-native-progress'; // Importa a biblioteca para barra de progresso
 
 const ProfileScreen = ({ navigation }) => {
   const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
@@ -114,8 +114,13 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { id, usuario, image, seguindo } = profile;
+  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
   const { first_name, last_name, username, email } = usuario;
+
+  // Cálculo do nível e progresso para o próximo nível
+  const level = Math.floor(pontuacao / 100);
+  const pointsToNextLevel = 100 - (pontuacao % 100);
+  const progress = (pontuacao % 100) / 100;
 
   return (
     <ScrollView
@@ -145,6 +150,14 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.infoContainer}>
         <Text style={styles.email}>{email}</Text>
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
+      </View>
+
+      {/* Gamificação - Exibição do nível e progresso */}
+      <View style={styles.gamificationContainer}>
+        <Text style={styles.levelText}>Nível: {level}</Text>
+        <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
+        <Progress.Bar progress={progress} width={300} color="#ffd700" style={styles.progressBar} />
+        <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
       {/* Botão para editar o perfil */}
@@ -219,6 +232,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ecf0f1',
     marginBottom: 24,
+  },
+  gamificationContainer: {
+    marginTop: 16,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 20,
+    color: '#ffd700',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  pointsText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginBottom: 8,
+  },
+  progressBar: {
+    marginBottom: 8,
+  },
+  nextLevelText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginTop: 8,
   },
   editButton: {
     backgroundColor: '#2980b9',

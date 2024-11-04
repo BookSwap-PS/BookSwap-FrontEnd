@@ -13,6 +13,9 @@ import SearchUser from './src/pages/profile/SearchProfiles';
 import CreateResenha from './src/pages/livro/CreateResenha';
 import ChatRequestsScreen from './src/pages/chat/ChatRequestsScreen'; // Importe a tela de solicitações de chat
 import ConversationsScreen from './src/pages/chat/ConversationsScreen'; // Importe a tela de conversas
+import EditLivro from './src/pages/livro/EditLivro';
+import UserHistory from './src/pages/profile/UserHistory';
+import OtherUserLibraryScreen from './src/pages/biblioteca/OtherUserLibraryScreen'; // Importando a biblioteca de outros usuários
 
 const Stack = createStackNavigator();
 
@@ -23,15 +26,17 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={Login} options={{ title: 'Login', headerShown: false }} />
         <Stack.Screen name="Registro" component={Registro} options={{ title: 'Registro', headerShown: false }} />
-        <Stack.Screen name="Main" component={BottomTabNavigator} options={{ title: 'Inicio', headerShown: false }} />
+        <Stack.Screen name="Main" component={BottomTabNavigator} options={{ title: 'Início', headerShown: false }} />
         <Stack.Screen name="LivroDetail" component={LivroDetail} options={{ title: 'Detalhes do Livro', headerShown: false }} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Editar Perfil', headerShown: false }} />
-        <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'UserLibrary', headerShown: false }} />
-        <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'UserProfile', headerShown: false }} />
+        <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'Minha Biblioteca', headerShown: false }} />
+        <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'Perfil do Usuário', headerShown: false }} />
         <Stack.Screen name="SearchUser" component={SearchUser} options={{ title: 'Buscar Usuários', headerShown: false }} />
         <Stack.Screen name="CreateResenha" component={CreateResenha} options={{ title: 'Criar Resenha', headerShown: false }} />
         <Stack.Screen name="ChatRequests" component={ChatRequestsScreen} options={{ title: 'Solicitações de Chat' }} />
         <Stack.Screen name="Conversations" component={ConversationsScreen} options={{ title: 'Conversas' }} />
+        <Stack.Screen name="EditLivro" component={EditLivro} options={{ title: 'Editar Livro', headerShown: false }} />
+        <Stack.Screen name="UserHistory" component={UserHistory} options={{ title: 'Histórico de Trocas', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
