@@ -9,6 +9,8 @@ export default function ConversationsScreen({ route }) {
     const [newMessage, setNewMessage] = useState('');
     const [ws, setWs] = useState(null);
     const [username, setUsername] = useState('');
+    const [receiver, setReceiver] = useState('');
+    const [trocaStatus, setTrocaStatus] = useState('');
 
     useEffect(() => {
         const fetchUsernameAndConnectWebSocket = async () => {
@@ -28,10 +30,12 @@ export default function ConversationsScreen({ route }) {
                 });
                 if (response.ok) {
                     const data = await response.json();
+                    console.log(`Data: ${data}`)
+                    setReceiver(data.receiver)
                     const userUsername = data.username;
                     setUsername(userUsername);
 
-                    const websocket = new WebSocket(`ws://192.168.15.7:8000/ws/chat?username=${userUsername}`);
+                    const websocket = new WebSocket(`ws://10.10.28.102:8000/ws/chat?username=${userUsername}`);
                     setWs(websocket);
 
                     websocket.onopen = () => {
@@ -94,7 +98,13 @@ export default function ConversationsScreen({ route }) {
             });
     
             if (response.ok) {
-                Alert.alert('Sucesso', 'Troca concluída com sucesso');
+                const data = await response.json();
+                Alert.alert('Sucesso', data.mensagem);
+                if (data.mensagem.includes('concluída')) {
+                    setTrocaStatus('Concluída');
+                } else {
+                    setTrocaStatus('Aguardando confirmação');
+                }
             } else {
                 const errorData = await response.json();
                 Alert.alert('Erro', errorData.erro || 'Erro ao concluir a troca');
@@ -132,7 +142,9 @@ export default function ConversationsScreen({ route }) {
                 />
                 <Button title="Enviar" onPress={sendMessage} />
             </View>
-            <Button title="Concluir Troca" onPress={concluirTroca} color="#28a745" />
+            <View>
+                {username == receiver ? <Button title="Concluir Troca" onPress={concluirTroca} color="#28a745" />: null}
+            </View>
         </View>
     );
 }
