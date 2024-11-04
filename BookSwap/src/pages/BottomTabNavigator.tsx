@@ -6,8 +6,8 @@ import Home from './home/Home';
 import ListLivro from './livro/ListLivro';
 import CreateLivro from './livro/CreateLivro';
 import Perfil from './profile/profile';
-import SearchUser from './profile/SearchProfiles';
-import ChatRequestsScreen from './chat/ChatRequestsScreen'; // Importe o novo componente
+import SearchUser from './profile/SearchProfiles'; // Importe o componente de busca de perfis
+import ChatRequestsScreen from './chat/ChatRequestsScreen'; // Importe o componente de chat
 
 const Tab = createBottomTabNavigator();
 
@@ -91,7 +91,12 @@ export default function BottomTabNavigator() {
             />
             <Tab.Screen
                 name="Chat"
-                component={ChatRequestsScreen} // Adicione a tela de chat
+                component={ChatRequestsScreen}
+                options={{ headerShown: false }}
+            />
+            <Tab.Screen
+                name="Buscar Usuários"
+                component={SearchUser}
                 options={{ headerShown: false }}
             />
             <Tab.Screen name="Perfil" component={Perfil} options={{ headerShown: false }} />

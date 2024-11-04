@@ -30,7 +30,6 @@ export default function ConversationsScreen({ route }) {
                     const data = await response.json();
                     const userUsername = data.username;
                     setUsername(userUsername);
-                    console.log(data)
 
                     const websocket = new WebSocket(`ws://192.168.15.7:8000/ws/chat?username=${userUsername}`);
                     setWs(websocket);
@@ -66,7 +65,7 @@ export default function ConversationsScreen({ route }) {
         return () => {
             if (ws) ws.close();
         };
-    }, []);
+    }, [chatId]);
 
     const sendMessage = () => {
         if (newMessage && ws) {
@@ -75,6 +74,33 @@ export default function ConversationsScreen({ route }) {
                 message: newMessage,
             }));
             setNewMessage('');
+        }
+    };
+
+    const concluirTroca = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+                Alert.alert('Erro', 'Token não encontrado');
+                return;
+            }
+    
+            const response = await fetch(`${API_DEV_URL}/concluir-troca/${chatId}/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (response.ok) {
+                Alert.alert('Sucesso', 'Troca concluída com sucesso');
+            } else {
+                const errorData = await response.json();
+                Alert.alert('Erro', errorData.erro || 'Erro ao concluir a troca');
+            }
+        } catch (error) {
+            console.error('Erro ao concluir a troca:', error);
         }
     };
 
@@ -106,6 +132,7 @@ export default function ConversationsScreen({ route }) {
                 />
                 <Button title="Enviar" onPress={sendMessage} />
             </View>
+            <Button title="Concluir Troca" onPress={concluirTroca} color="#28a745" />
         </View>
     );
 }

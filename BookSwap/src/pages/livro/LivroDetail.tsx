@@ -100,7 +100,7 @@ export default function LivroDetail({ route, navigation }) {
             if (response.ok) {
                 Alert.alert('Solicitação Enviada', 'Sua solicitação de troca foi enviada com sucesso!');
             } else {
-                Alert.alert('Erro', 'Houve um problema ao enviar a solicitação de troca.');
+                Alert.alert('Erro', 'Livro Indisponivel para Troca');
             }
         } catch (error) {
             console.error('Erro ao solicitar a troca:', error);
@@ -172,7 +172,7 @@ export default function LivroDetail({ route, navigation }) {
                     <Text style={styles.detailText}>Dono: {livro.dono}</Text>
                     <Text style={styles.detailText}>Resenha: {livro.resenha}</Text>
                 </View>
-                {authenticatedUserId !== livro.perfil_id && livro.disponivel && (
+                {authenticatedUserId !== livro.perfil_id && livro.disponibilidade && (
                     <TouchableOpacity
                         style={styles.requestExchangeButton}
                         onPress={handleSolicitarTroca}
