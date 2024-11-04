@@ -11,6 +11,8 @@ import UserLibraryScreen from './src/pages/biblioteca/UserBiblioteca';
 import UserProfile from './src/pages/profile/UserProfile';
 import SearchUser from './src/pages/profile/SearchProfiles';
 import CreateResenha from './src/pages/livro/CreateResenha';
+import ChatRequestsScreen from './src/pages/chat/ChatRequestsScreen'; // Importe a tela de solicitações de chat
+import ConversationsScreen from './src/pages/chat/ConversationsScreen'; // Importe a tela de conversas
 
 const Stack = createStackNavigator();
 
@@ -27,7 +29,9 @@ export default function App() {
         <Stack.Screen name="UserLibrary" component={UserLibraryScreen} options={{ title: 'UserLibrary', headerShown: false }} />
         <Stack.Screen name="UserProfile" component={UserProfile} options={{ title: 'UserProfile', headerShown: false }} />
         <Stack.Screen name="SearchUser" component={SearchUser} options={{ title: 'Buscar Usuários', headerShown: false }} />
-        <Stack.Screen name="CreateResenha" component={CreateResenha} options={{ title: 'Criar Resenha', headerShown: false}} />
+        <Stack.Screen name="CreateResenha" component={CreateResenha} options={{ title: 'Criar Resenha', headerShown: false }} />
+        <Stack.Screen name="ChatRequests" component={ChatRequestsScreen} options={{ title: 'Solicitações de Chat' }} />
+        <Stack.Screen name="Conversations" component={ConversationsScreen} options={{ title: 'Conversas' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

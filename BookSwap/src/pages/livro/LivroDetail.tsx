@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 import { jwtDecode } from 'jwt-decode';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importa o ícone de seta e coração
-import CreateResenha from './CreateResenha';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function LivroDetail({ route, navigation }) {
     const { livroId } = route.params;
@@ -29,7 +28,6 @@ export default function LivroDetail({ route, navigation }) {
             if (!userId) {
                 console.log('Usuário não encontrado');
             } else {
-                console.log('O id do usuário logado é:', userId);
                 setAuthenticatedUserId(userId);
             }
 
@@ -51,15 +49,6 @@ export default function LivroDetail({ route, navigation }) {
         }
     };
 
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await fetchLivroDetalhes();
-    };
-
-    useEffect(() => {
-        fetchLivroDetalhes();
-    }, []);
-
     const handleCurtir = async () => {
         try {
             const token = await AsyncStorage.getItem('token');
@@ -80,12 +69,52 @@ export default function LivroDetail({ route, navigation }) {
                 setCurtido(!curtido);
                 await fetchLivroDetalhes(); // Atualiza os dados do livro, incluindo o número de curtidas
             } else {
-                console.error('Erro ao curtir/descurtir o livro');
+                Alert.alert('Erro', 'Erro ao curtir/descurtir o livro.');
             }
         } catch (error) {
             console.error('Erro ao curtir/descurtir o livro:', error);
         }
     };
+
+    const handleSolicitarTroca = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+                console.log('Token não encontrado');
+                return;
+            }
+
+            const response = await fetch(`${API_DEV_URL}/chat-requests/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    usuarioDestino: livro.perfil_id,
+                    livro: livroId,
+                    mensagem: 'Gostaria de solicitar a troca deste livro.',
+                }),
+            });
+
+            if (response.ok) {
+                Alert.alert('Solicitação Enviada', 'Sua solicitação de troca foi enviada com sucesso!');
+            } else {
+                Alert.alert('Erro', 'Houve um problema ao enviar a solicitação de troca.');
+            }
+        } catch (error) {
+            console.error('Erro ao solicitar a troca:', error);
+        }
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchLivroDetalhes();
+    };
+
+    useEffect(() => {
+        fetchLivroDetalhes();
+    }, []);
 
     if (loading && !refreshing) {
         return (
@@ -143,25 +172,13 @@ export default function LivroDetail({ route, navigation }) {
                     <Text style={styles.detailText}>Dono: {livro.dono}</Text>
                     <Text style={styles.detailText}>Resenha: {livro.resenha}</Text>
                 </View>
-                {authenticatedUserId === livro.perfil_id && (
+                {authenticatedUserId !== livro.perfil_id && livro.disponivel && (
                     <TouchableOpacity
-                        style={styles.ownerButton}
-                        onPress={() => navigation.navigate('CreateResenha', { livroId })}
+                        style={styles.requestExchangeButton}
+                        onPress={handleSolicitarTroca}
                     >
-                        <Text style={styles.ownerButtonText}>
-                        {livro.resenha && livro.resenha.length > 0 ? 'Editar Resenha' : 'Adicionar Resenha'}
-                        </Text>
+                        <Text style={styles.requestExchangeButtonText}>Solicitar Troca</Text>
                     </TouchableOpacity>
-                )}
-                {authenticatedUserId !== livro.perfil_id && (
-                  <TouchableOpacity
-                  style={styles.ownerButton}
-                  onPress={() => navigation.navigate('UserProfile', { userId: livro.perfil_id })}
-                  >
-                      <Text style={styles.ownerButtonText}>
-                          Acessar o perfil do(a): {livro.dono}
-                      </Text>
-                  </TouchableOpacity>
                 )}
                 <View style={styles.likeContainer}>
                     <TouchableOpacity onPress={handleCurtir}>
@@ -248,14 +265,14 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginBottom: 5,
     },
-    ownerButton: {
-        backgroundColor: '#2980b9',
+    requestExchangeButton: {
+        backgroundColor: '#27ae60',
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
         marginTop: 20,
     },
-    ownerButtonText: {
+    requestExchangeButtonText: {
         color: '#fff',
         fontSize: 18,
     },
