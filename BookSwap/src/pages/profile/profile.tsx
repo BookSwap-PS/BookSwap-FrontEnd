@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, API_DEV_URL } from '@env';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from "jwt-decode";
+import * as Progress from 'react-native-progress'; // Importa a biblioteca para barra de progresso
 
 const ProfileScreen = ({ navigation }) => {
-  const [profile, setProfile] = useState(null);
+  const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
+  const [profile, setProfile] = useState(null); // Estado para o perfil do usuário autenticado
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false); // Estado para "pull to refresh"
 
@@ -14,10 +17,22 @@ const ProfileScreen = ({ navigation }) => {
 
   const fetchProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('token'); // Recupera o token do AsyncStorage
 
       if (!token) {
         console.log('Token não encontrado');
+        return;
+      }
+
+      // Usando jwt-decode para decodificar o token JWT e obter o user_id
+      const decodedToken = jwtDecode(token); 
+      const authenticatedUserId = decodedToken.user_id; // Extraindo o user_id do payload
+
+      console.log('Token:', token);
+      console.log('Authenticated User ID:', authenticatedUserId);
+
+      if (!authenticatedUserId) {
+        console.log('ID do usuário não encontrado no token');
         return;
       }
 
@@ -35,10 +50,12 @@ const ProfileScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        if (Array.isArray(data) && data.length > 0) {
-          setProfile(data[0]);
+        setAllProfiles(data); // Armazena todos os perfis no estado
+        const userProfile = data.find(profile => profile.usuario.id === parseInt(authenticatedUserId));
+        if (userProfile) {
+          setProfile(userProfile);
         } else {
-          console.log('Nenhum dado de perfil encontrado');
+          console.log('Perfil do usuário autenticado não encontrado');
         }
       } else {
         console.log('Erro ao buscar dados do perfil:', data);
@@ -58,7 +75,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile'); // Navega para a tela de edição de perfil
+    if (profile) {
+      // Passa o perfil do usuário para a tela de edição
+      navigation.navigate('EditProfile', { profile }); 
+    } else {
+      console.log('Perfil não encontrado');
+    }
   };
 
   const handleViewLibrary = () => {
@@ -78,7 +100,13 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#A9A9A9']} // Cor neutra (cinza)
+            tintColor={'#A9A9A9'} // Cor neutra para iOS
+            progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+          />
         }
       >
         <Text style={styles.noProfileText}>Nenhum dado de perfil disponível.</Text>
@@ -86,14 +114,25 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { id, usuario, image, seguindo } = profile;
+  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
   const { first_name, last_name, username, email } = usuario;
+
+  // Cálculo do nível e progresso para o próximo nível
+  const level = Math.floor(pontuacao / 100);
+  const pointsToNextLevel = 100 - (pontuacao % 100);
+  const progress = (pontuacao % 100) / 100;
 
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#A9A9A9']} // Cor neutra (cinza)
+          tintColor={'#A9A9A9'} // Cor neutra para iOS
+          progressBackgroundColor={'#F5F5F5'} // Fundo neutro
+        />
       }
     >
       <View style={styles.header}>
@@ -111,6 +150,14 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.infoContainer}>
         <Text style={styles.email}>{email}</Text>
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
+      </View>
+
+      {/* Gamificação - Exibição do nível e progresso */}
+      <View style={styles.gamificationContainer}>
+        <Text style={styles.levelText}>Nível: {level}</Text>
+        <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
+        <Progress.Bar progress={progress} width={300} color="#ffd700" style={styles.progressBar} />
+        <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
       </View>
 
       {/* Botão para editar o perfil */}
@@ -185,6 +232,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ecf0f1',
     marginBottom: 24,
+  },
+  gamificationContainer: {
+    marginTop: 16,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 20,
+    color: '#ffd700',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  pointsText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginBottom: 8,
+  },
+  progressBar: {
+    marginBottom: 8,
+  },
+  nextLevelText: {
+    fontSize: 16,
+    color: '#ecf0f1',
+    marginTop: 8,
   },
   editButton: {
     backgroundColor: '#2980b9',

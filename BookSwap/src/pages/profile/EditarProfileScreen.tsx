@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { jwtDecode } from 'jwt-decode'; // Corrigido o import
 
 const EditProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
@@ -11,7 +12,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [image, setImage] = useState(null); // Novo estado para a imagem
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,11 +22,14 @@ const EditProfileScreen = ({ navigation }) => {
   const fetchProfileData = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
+
+      const decodedToken = jwtDecode(token);
+      const authenticatedUserId = decodedToken.user_id;
+      console.log('Authenticated User ID:', authenticatedUserId);
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -38,16 +42,17 @@ const EditProfileScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        if (Array.isArray(data) && data.length > 0) {
-          setProfile(data[0]);
-          const { usuario, image } = data[0];
+        const userProfile = data.find(profile => profile.usuario.id === authenticatedUserId);
+        if (userProfile) {
+          setProfile(userProfile);
+          const { usuario, id, image } = userProfile;
           setFirstName(usuario.first_name);
           setLastName(usuario.last_name);
           setEmail(usuario.email);
           setUsername(usuario.username);
-          setImage(image);  // Definindo a imagem existente do perfil
+          setImage(image);
         } else {
-          console.log('Nenhum dado de perfil encontrado');
+          console.log('Perfil do usuário autenticado não encontrado');
         }
       } else {
         console.log('Erro ao buscar dados do perfil:', data);
@@ -67,20 +72,18 @@ const EditProfileScreen = ({ navigation }) => {
         return;
       }
     }
-  
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-  
-    console.log('Resultado do ImagePicker:', result); // Log completo do resultado
-  
+
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const selectedImage = result.assets[0].uri;  // Obtendo a URI da imagem do array assets
-      console.log('Imagem selecionada URI:', selectedImage); // Mostra a URI selecionada
-      setImage(selectedImage); // Define o caminho da imagem selecionada
+      const selectedImage = result.assets[0].uri;
+      console.log('Imagem selecionada URI:', selectedImage);
+      setImage(selectedImage);
     } else {
       console.log('Seleção de imagem foi cancelada ou URI não encontrada');
     }
@@ -89,7 +92,6 @@ const EditProfileScreen = ({ navigation }) => {
   const handleSave = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-
       if (!token) {
         console.log('Token não encontrado');
         return;
@@ -108,8 +110,6 @@ const EditProfileScreen = ({ navigation }) => {
       if (image) {
         const uriParts = image.split('.');
         const fileType = uriParts[uriParts.length - 1];
-        console.log('Enviando imagem com URI:', image, 'e tipo de arquivo:', fileType);
-
         formData.append('image', {
           uri: image,
           name: `profile.${fileType}`,
@@ -119,7 +119,7 @@ const EditProfileScreen = ({ navigation }) => {
 
       console.log('FormData a ser enviado:', formData);
 
-      const response = await fetch(`${API_DEV_URL}/perfil/${profile.usuario.id}/`, {
+      const response = await fetch(`${API_DEV_URL}/perfil/${profile.id}/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -127,13 +127,13 @@ const EditProfileScreen = ({ navigation }) => {
         body: formData,
       });
 
+      const responseData = await response.json();
       if (response.ok) {
         Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
         navigation.goBack();
       } else {
-        const data = await response.json();
-        console.log('Erro ao atualizar perfil:', data);
-        Alert.alert('Erro', 'Não foi possível atualizar o perfil');
+        console.log('Erro ao atualizar perfil:', responseData);
+        Alert.alert('Erro', responseData.detail || 'Não foi possível atualizar o perfil');
       }
     } catch (error) {
       console.log('Erro ao atualizar perfil:', error);
@@ -209,30 +209,30 @@ const EditProfileScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
-    backgroundColor: '#2c3e51',
-    padding:16,
+    flex: 1,
+    backgroundColor: '#1A2B45',
+    padding: 16,
     justifyContent: 'center',
   },
   loadingContainer: {
-    flex:1,
+    flex: 1,
     backgroundColor: '#2c3e51',
-    alignItems:'center',
-    justifyContent:'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize:28,
-    fontWeight:'bold',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#fff',
-    marginBottom:24,
+    marginBottom: 24,
     textAlign: 'center',
   },
   input: {
     backgroundColor: '#34495e',
     color: '#fff',
-    padding:12,
-    marginBottom:16,
-    borderRadius:8,
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 8,
   },
   saveButton: {
     backgroundColor: '#2980b9',
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
-    fontSize:18,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   imagePickerButton: {
