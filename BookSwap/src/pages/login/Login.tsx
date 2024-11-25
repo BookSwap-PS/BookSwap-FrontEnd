@@ -78,7 +78,7 @@ export default function Login() {
                     value={senha}
                     onChangeText={setSenha}
                 />
-                <Text style={styles.forgotPassword}>Esqueceu sua senha?</Text>
+                {/* <Text style={styles.forgotPassword}>Esqueceu sua senha?</Text> */}
             </View>
 
             <TouchableOpacity style={styles.button} onPress={handleLogin}>

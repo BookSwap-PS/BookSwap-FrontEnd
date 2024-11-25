@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_DEV_URL } from '@env';
+import { API_DEV_URL,API_CHAT_URL } from '@env';
 
 export default function ConversationsScreen({ route }) {
     const { chatId } = route.params;
@@ -35,7 +35,7 @@ export default function ConversationsScreen({ route }) {
                     const userUsername = data.username;
                     setUsername(userUsername);
 
-                    const websocket = new WebSocket(`ws://10.10.28.102:8000/ws/chat?username=${userUsername}`);
+                    const websocket = new WebSocket(`ws://${API_CHAT_URL}/ws/chat?username=${userUsername}`);
                     setWs(websocket);
 
                     websocket.onopen = () => {

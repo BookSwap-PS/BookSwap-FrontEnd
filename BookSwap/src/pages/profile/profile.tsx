@@ -4,6 +4,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Scr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from "jwt-decode";
 import * as Progress from 'react-native-progress'; // Importa a biblioteca para barra de progresso
+import Icon from 'react-native-vector-icons/Ionicons'; // Importa ícones para a seta de voltar
 
 const ProfileScreen = ({ navigation }) => {
   const [allProfiles, setAllProfiles] = useState([]); // Estado para armazenar todos os perfis
@@ -35,9 +36,6 @@ const ProfileScreen = ({ navigation }) => {
         console.log('ID do usuário não encontrado no token');
         return;
       }
-
-      console.log("prod: " + `${API_BASE_URL}/perfil/`);
-      console.log("dev: " + `${API_DEV_URL}/perfil/`);
 
       const response = await fetch(`${API_DEV_URL}/perfil/`, {
         method: 'GET',
@@ -87,6 +85,12 @@ const ProfileScreen = ({ navigation }) => {
     navigation.navigate('UserLibrary'); // Navega para a tela de biblioteca
   };
 
+  const handleViewHistory = () => {
+    if (profile) {
+      navigation.navigate('UserHistory', { userId: profile.usuario.id }); // Navega para a tela de histórico de trocas
+    }
+  };
+
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
@@ -114,13 +118,14 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  const { id, usuario, image, seguindo, pontuacao = 0 } = profile;
+  const { id, usuario, image, seguindo, seguidores, pontuacao = 0, nivel } = profile;
   const { first_name, last_name, username, email } = usuario;
 
   // Cálculo do nível e progresso para o próximo nível
-  const level = Math.floor(pontuacao / 100);
-  const pointsToNextLevel = 100 - (pontuacao % 100);
-  const progress = (pontuacao % 100) / 100;
+  const level = Math.floor(pontuacao / 5) + 1;
+  const pointsToNextLevel = 5 - (pontuacao % 5);
+  const progress = (pontuacao % 5) / 5;
+
 
   return (
     <ScrollView
@@ -135,6 +140,11 @@ const ProfileScreen = ({ navigation }) => {
         />
       }
     >
+      {/* Botão de voltar */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Icon name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <View style={styles.header}>
         {image ? (
           <Image source={{ uri: image }} style={styles.profileImage} />
@@ -150,11 +160,12 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.infoContainer}>
         <Text style={styles.email}>{email}</Text>
         <Text style={styles.following}>Seguindo: {seguindo.length}</Text>
+        <Text style={styles.followers}>Seguidores: {seguidores.length}</Text>
       </View>
 
       {/* Gamificação - Exibição do nível e progresso */}
       <View style={styles.gamificationContainer}>
-        <Text style={styles.levelText}>Nível: {level}</Text>
+        <Text style={styles.levelText}>Nível: {nivel}</Text>
         <Text style={styles.pointsText}>Pontuação: {pontuacao} pontos</Text>
         <Progress.Bar progress={progress} width={300} color="#ffd700" style={styles.progressBar} />
         <Text style={styles.nextLevelText}>Faltam {pointsToNextLevel} pontos para o próximo nível</Text>
@@ -168,6 +179,11 @@ const ProfileScreen = ({ navigation }) => {
       {/* Botão para ver a Biblioteca do usuário */}
       <TouchableOpacity style={styles.libraryButton} onPress={handleViewLibrary}>
         <Text style={styles.libraryButtonText}>Minha Biblioteca</Text>
+      </TouchableOpacity>
+
+      {/* Botão para ver o histórico de trocas */}
+      <TouchableOpacity style={styles.historyButton} onPress={handleViewHistory}>
+        <Text style={styles.historyButtonText}>Trocas</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -184,6 +200,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c3e51',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 1,
   },
   header: {
     alignItems: 'center',
@@ -229,6 +251,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   following: {
+    fontSize: 18,
+    color: '#ecf0f1',
+    marginBottom: 8,
+  },
+  followers: {
     fontSize: 18,
     color: '#ecf0f1',
     marginBottom: 24,
@@ -277,8 +304,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignSelf: 'center',
+    marginBottom: 20,
   },
   libraryButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  historyButton: {
+    backgroundColor: '#8e44ad',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  historyButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',

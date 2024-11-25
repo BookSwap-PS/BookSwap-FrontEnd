@@ -158,18 +158,28 @@ export default function ChatRequestsScreen() {
             <Text style={styles.requestText}>Destinatário: {item.usuarioDestino.first_name} {item.usuarioDestino.last_name} ({item.usuarioDestino.username})</Text>
             <Text style={styles.requestText}>Mensagem: {item.mensagem}</Text>
             <Text style={styles.statusText}>
-                Status: {item.aceito ? <Text style={styles.accepted}>Aceito</Text> : <Text style={styles.pending}>Pendente</Text>}
+                Status: {item.trocaFeita 
+                    ? <Text style={styles.completed}>Troca Concluída</Text> 
+                    : item.aceito 
+                    ? <Text style={styles.accepted}>Aceito</Text> 
+                    : <Text style={styles.pending}>Pendente</Text>}
             </Text>
-            {item.usuarioDestino.id === authenticatedUserId && !item.aceito && (
+            {/* Botões de aceitar/rejeitar para solicitações recebidas */}
+            {item.usuarioDestino.id === authenticatedUserId && !item.aceito && !item.trocaFeita && (
                 <View style={styles.buttonContainer}>
                     <Button title="Aceitar" onPress={() => handleAcceptRequest(item.id)} />
                     <Button title="Rejeitar" onPress={() => handleRejectRequest(item.id)} color="#e74c3c" />
                 </View>
             )}
-            {item.aceito && (
+            {/* Botão para acessar o chat */}
+            {item.aceito && !item.trocaFeita && (
                 <TouchableOpacity style={styles.chatButton} onPress={() => navigateToChat(item)}>
                     <Text style={styles.chatButtonText}>Ir para o Chat</Text>
                 </TouchableOpacity>
+            )}
+            {/* Caso a troca esteja concluída, desabilita o botão de chat */}
+            {item.trocaFeita && (
+                <Text style={styles.infoText}>O chat está encerrado pois a troca foi concluída.</Text>
             )}
         </View>
     );
@@ -266,5 +276,15 @@ const styles = StyleSheet.create({
         color: '#fff',
         textAlign: 'center',
         fontSize: 16,
+    },
+    completed: {
+        color: '#27ae60',
+        fontWeight: 'bold',
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 10,
+        fontStyle: 'italic',
     },
 });

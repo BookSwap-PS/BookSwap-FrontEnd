@@ -15,6 +15,7 @@ import ChatRequestsScreen from './src/pages/chat/ChatRequestsScreen'; // Importe
 import ConversationsScreen from './src/pages/chat/ConversationsScreen'; // Importe a tela de conversas
 import EditLivro from './src/pages/livro/EditLivro';
 import UserHistory from './src/pages/profile/UserHistory';
+import UserBooks from './src/pages/profile/UserBooks';
 import OtherUserLibraryScreen from './src/pages/biblioteca/OtherUserLibraryScreen'; // Importando a biblioteca de outros usuários
 
 const Stack = createStackNavigator();
@@ -37,6 +38,7 @@ export default function App() {
         <Stack.Screen name="Conversations" component={ConversationsScreen} options={{ title: 'Conversas' }} />
         <Stack.Screen name="EditLivro" component={EditLivro} options={{ title: 'Editar Livro', headerShown: false }} />
         <Stack.Screen name="UserHistory" component={UserHistory} options={{ title: 'Histórico de Trocas', headerShown: false }} />
+        <Stack.Screen name="UserBooks" component={UserBooks} options={{ title: 'Livros do Usuario', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

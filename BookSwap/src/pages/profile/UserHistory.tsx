@@ -1,29 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { RouteProp } from '@react-navigation/native';
 
-interface Troca {
-  id: number;
-  solicitante: string;
-  destinatario: string;
-  livro: string;
-  data: string;
-  status: string;
-  avaliacao?: number;
-  pontuacao: number;
-}
-
-interface UserHistoryProps {
-  route: RouteProp<{ params: { userId: number } }, 'params'>;
-}
-
-const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
-  const { userId } = route.params;
-  const [history, setHistory] = useState<Troca[]>([]);
+const UserHistory = ({ route, navigation }) => {
+  const { userId } = route.params; // ID do usuário visualizado
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     fetchUserHistory();
@@ -31,15 +16,13 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
 
   const fetchUserHistory = async () => {
     try {
-      setLoading(true);
       const token = await AsyncStorage.getItem('token');
       if (!token) {
         console.log('Token não encontrado');
         return;
       }
 
-      const apiUrl = API_BASE_URL || API_DEV_URL; // Alterna entre produção e desenvolvimento
-      const response = await fetch(`${apiUrl}/perfil/${userId}/historico-trocas/`, {
+      const response = await fetch(`${API_DEV_URL}/historico-trocas/?user=${userId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -49,30 +32,28 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Histórico de trocas:', data);
         setHistory(data);
       } else {
         console.log('Erro ao buscar histórico de trocas');
-        Alert.alert('Erro', 'Não foi possível buscar o histórico de trocas.');
       }
     } catch (error) {
-      console.log('Erro ao buscar histórico de trocas:', error);
+      console.log('Erro ao buscar histórico:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchUserHistory();
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2980b9" />
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
@@ -80,31 +61,40 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
   if (history.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.noHistoryText}>Este usuário não possui histórico de trocas.</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.noHistoryText}>Nenhuma troca concluída encontrada.</Text>
       </View>
     );
   }
 
+  const renderItem = ({ item }) => (
+    <View style={styles.historyItem}>
+      <Text style={styles.historyText}>Livro: {item.livro.titulo}</Text>
+      <Text style={styles.historyText}>Com: {item.usuarioDestino.username}</Text>
+      <Text style={styles.historyText}>Data: {new Date(item.dataTroca).toLocaleDateString()}</Text>
+      <Text style={styles.historyText}>Mensagem: {item.mensagem}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Histórico de Trocas</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Icon name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
+      <Text style={styles.totalCountText}>Total de Trocas: {history.length}</Text>
       <FlatList
         data={history}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.historyItem}>
-            <Icon name="book-outline" size={20} color="#fff" />
-            <View style={styles.historyDetails}>
-              <Text style={styles.bookTitle}>{item.livro}</Text>
-              <Text style={styles.infoText}>Solicitante: {item.solicitante}</Text>
-              <Text style={styles.infoText}>Destinatário: {item.destinatario}</Text>
-              <Text style={styles.infoText}>Data: {formatDate(item.data)}</Text>
-              <Text style={styles.infoText}>Status: {item.status}</Text>
-              <Text style={styles.infoText}>Avaliação: {item.avaliacao || 'N/A'}</Text>
-              <Text style={styles.infoText}>Pontuação: {item.pontuacao}</Text>
-            </View>
-          </View>
-        )}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#0000ff']}
+          />
+        }
       />
     </View>
   );
@@ -113,52 +103,44 @@ const UserHistory: React.FC<UserHistoryProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A2B45',
+    backgroundColor: '#1f2a44',
     padding: 16,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#1A2B45',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2c3e51',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-    textAlign: 'center',
+  backButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 1,
   },
   noHistoryText: {
     fontSize: 18,
-    color: '#A9A9A9',
+    color: '#ecf0f1',
     textAlign: 'center',
     marginTop: 20,
   },
+  totalCountText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ecf0f1',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
   historyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#34495e',
     padding: 16,
-    backgroundColor: '#2A3B5F',
     borderRadius: 8,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    elevation: 3,
   },
-  historyDetails: {
-    marginLeft: 10,
-  },
-  bookTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  infoText: {
+  historyText: {
     fontSize: 16,
-    color: '#D3D3D3',
+    color: '#ecf0f1',
+    marginBottom: 4,
   },
 });
 
