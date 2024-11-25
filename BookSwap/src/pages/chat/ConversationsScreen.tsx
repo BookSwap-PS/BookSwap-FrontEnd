@@ -4,8 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_DEV_URL, API_CHAT_URL } from '@env';
 
 export default function ConversationsScreen({ route }) {
-    const { chatId, bookTitle } = route.params; // Recebe o título do livro
+    const { chatId } = route.params; // Removemos bookTitle, ele será carregado da API
     const [messages, setMessages] = useState([]);
+    const [chatTitle, setChatTitle] = useState('Carregando...'); // Estado para o título do livro
     const [newMessage, setNewMessage] = useState('');
     const [ws, setWs] = useState(null);
     const [username, setUsername] = useState('');
@@ -21,7 +22,7 @@ export default function ConversationsScreen({ route }) {
                     return;
                 }
 
-                // Recupera mensagens do chat específico
+                // Recupera mensagens e detalhes do chat específico
                 const response = await fetch(`${API_DEV_URL}/chats/${chatId}/`, {
                     method: 'GET',
                     headers: {
@@ -33,8 +34,9 @@ export default function ConversationsScreen({ route }) {
                 if (response.ok) {
                     const data = await response.json();
                     setMessages(data.mensagens); // Use a chave "mensagens" da API
+                    setChatTitle(data.tituloTroca); // Carrega o título da troca
                 } else {
-                    Alert.alert('Erro', 'Não foi possível carregar as mensagens');
+                    Alert.alert('Erro', 'Não foi possível carregar o chat.');
                 }
 
                 // Recupera username e conecta ao WebSocket
@@ -61,7 +63,6 @@ export default function ConversationsScreen({ route }) {
                         // Verifica se o payload contém os campos necessários
                         if (data.message && data.sender_username && data.time) {
                             setMessages((prevMessages) => {
-                                // Verifica se a mensagem já existe no estado (baseado no conteúdo e no remetente)
                                 const isDuplicate = prevMessages.some(
                                     (msg) =>
                                         msg.conteudo === data.message &&
@@ -71,10 +72,10 @@ export default function ConversationsScreen({ route }) {
                     
                                 if (isDuplicate) {
                                     console.warn('Mensagem duplicada ignorada:', data);
-                                    return prevMessages; // Retorna o estado atual, sem alterações
+                                    return prevMessages;
                                 }
-                    
-                                // Adiciona a nova mensagem
+
+                                // Adiciona a nova mensagem recebida
                                 return [
                                     ...prevMessages,
                                     {
@@ -116,17 +117,6 @@ export default function ConversationsScreen({ route }) {
             };
     
             ws.send(JSON.stringify(messageData)); // Envia ao WebSocket
-    
-            // Adiciona ao estado local para exibição imediata
-            setMessages((prevMessages) => [
-                ...prevMessages,
-                {
-                    quemEnviou: username,
-                    conteudo: newMessage,
-                    dataEnvio: messageData.time,
-                },
-            ]);
-    
             setNewMessage('');
         }
     };
@@ -162,7 +152,7 @@ export default function ConversationsScreen({ route }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.chatTitle}>Troca ({bookTitle})</Text>
+            <Text style={styles.chatTitle}>{chatTitle}</Text>
             <FlatList
                 data={messages}
                 keyExtractor={(item, index) => index.toString()}

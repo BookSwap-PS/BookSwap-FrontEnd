@@ -175,7 +175,7 @@ export default function LivroDetail({ route, navigation }) {
                 Alert.alert('Erro', 'Livro Indisponivel para Troca');
             }
         } catch (error) {
-            console.error('Erro ao solicitar a troca:', error);
+            // Alert.alert('Erro', 'Livro Indisponivel para Troca');
         }
     };
 
