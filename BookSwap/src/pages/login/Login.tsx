@@ -11,13 +11,15 @@ import {
 import { useNavigation } from '@react-navigation/native'; 
 import { StyleSheet } from "react-native";
 import Logo from "../../assets/Logo.png";
-import { API_BASE_URL, API_DEV_URL } from '@env';
+import { API_DEV_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 export default function Login() {
     const navigation = useNavigation(); 
     const [usuario, setUsuario] = useState("");
     const [senha, setSenha] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         if (!usuario || !senha) {
@@ -25,33 +27,34 @@ export default function Login() {
             return;
         }
 
+        setLoading(true);
         try {
-            const response = await fetch(`${API_DEV_URL}/login/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: usuario,
-                    password: senha, 
-                }),
+            const response = await axios.post(`${API_DEV_URL}/login/`, {
+                username: usuario,
+                password: senha,
             });
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                // Salva o token e o user_id no AsyncStorage
+            if (response.status === 200) {
+                const data = response.data;
+
+                // Salva o token e outros dados no AsyncStorage
                 await AsyncStorage.setItem('token', data.access);
-                // await AsyncStorage.setItem('user_id', String(data.user_id)); // Certifica-se de que o user_id está sendo salvo
 
                 Alert.alert("Sucesso", "Login realizado com sucesso!");
-                navigation.navigate('Main'); 
-            } else {
-                Alert.alert("Erro", data.message || "Login falhou, verifique suas credenciais.");
+                navigation.navigate('Main');
             }
         } catch (error) {
             console.error("Erro:", error);
-            Alert.alert("Erro", "Ocorreu um erro ao se conectar ao servidor.");
+            if (error.response) {
+                // Erro retornado pela API
+                const message = error.response.data.message || "Login falhou, verifique suas credenciais.";
+                Alert.alert("Erro", message);
+            } else {
+                // Erro de rede ou outros
+                Alert.alert("Erro", "Ocorreu um erro ao se conectar ao servidor.");
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -78,11 +81,10 @@ export default function Login() {
                     value={senha}
                     onChangeText={setSenha}
                 />
-                {/* <Text style={styles.forgotPassword}>Esqueceu sua senha?</Text> */}
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Entrar</Text>
+            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+                <Text style={styles.buttonText}>{loading ? "Entrando..." : "Entrar"}</Text>
             </TouchableOpacity>
 
             <View style={styles.separatorContainer}>

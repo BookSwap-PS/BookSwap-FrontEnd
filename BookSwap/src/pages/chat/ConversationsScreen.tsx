@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_DEV_URL, API_CHAT_URL } from '@env';
+import axios from 'axios';
 
 export default function ConversationsScreen({ route }) {
-    const { chatId } = route.params; // Removemos bookTitle, ele será carregado da API
+    const { chatId } = route.params;
     const [messages, setMessages] = useState([]);
-    const [chatTitle, setChatTitle] = useState('Carregando...'); // Estado para o título do livro
+    const [chatTitle, setChatTitle] = useState('Carregando...');
     const [newMessage, setNewMessage] = useState('');
     const [ws, setWs] = useState(null);
     const [username, setUsername] = useState('');
@@ -22,45 +23,41 @@ export default function ConversationsScreen({ route }) {
                     return;
                 }
 
-                // Recupera mensagens e detalhes do chat específico
-                const response = await fetch(`${API_DEV_URL}/chats/${chatId}/`, {
-                    method: 'GET',
+                // Recuperar mensagens e título do chat
+                const response = await axios.get(`${API_DEV_URL}/chats/${chatId}/`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
                     },
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setMessages(data.mensagens); // Use a chave "mensagens" da API
-                    setChatTitle(data.tituloTroca); // Carrega o título da troca
+                if (response.status === 200) {
+                    const data = response.data;
+                    setMessages(data.mensagens);
+                    setChatTitle(data.tituloTroca);
                 } else {
                     Alert.alert('Erro', 'Não foi possível carregar o chat.');
                 }
 
-                // Recupera username e conecta ao WebSocket
-                const userResponse = await fetch(`${API_DEV_URL}/get-username/`, {
-                    method: 'GET',
+                // Recuperar username e conectar ao WebSocket
+                const userResponse = await axios.get(`${API_DEV_URL}/get-username/`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
                     },
                 });
 
-                if (userResponse.ok) {
-                    const userData = await userResponse.json();
+                if (userResponse.status === 200) {
+                    const userData = userResponse.data;
                     setUsername(userData.username);
                     setReceiver(userData.receiver);
 
-                    const websocket = new WebSocket(`ws://${API_CHAT_URL}/ws/chat?username=${userData.username}`);
+                    console.log(`ws://${API_CHAT_URL}/ws/chat/?username=${userData.username}`);
+                    const websocket = new WebSocket(`ws://${API_CHAT_URL}/ws/chat/?username=${userData.username}`);
                     setWs(websocket);
 
                     websocket.onopen = () => console.log('WebSocket Conectado');
                     websocket.onmessage = (e) => {
                         const data = JSON.parse(e.data);
-                    
-                        // Verifica se o payload contém os campos necessários
+
                         if (data.message && data.sender_username && data.time) {
                             setMessages((prevMessages) => {
                                 const isDuplicate = prevMessages.some(
@@ -69,13 +66,12 @@ export default function ConversationsScreen({ route }) {
                                         msg.quemEnviou === data.sender_username &&
                                         msg.dataEnvio === data.time
                                 );
-                    
+
                                 if (isDuplicate) {
                                     console.warn('Mensagem duplicada ignorada:', data);
                                     return prevMessages;
                                 }
 
-                                // Adiciona a nova mensagem recebida
                                 return [
                                     ...prevMessages,
                                     {
@@ -89,14 +85,15 @@ export default function ConversationsScreen({ route }) {
                             console.warn('Mensagem recebida com dados incompletos:', data);
                         }
                     };
-                    
+
                     websocket.onclose = () => console.log('WebSocket Desconectado');
                     websocket.onerror = (error) => console.error('Erro no WebSocket:', error);
                 } else {
-                    Alert.alert('Erro', 'Não foi possível obter o username');
+                    Alert.alert('Erro', 'Não foi possível obter o username.');
                 }
             } catch (error) {
                 console.error('Erro ao carregar mensagens:', error);
+                Alert.alert('Erro', 'Falha ao conectar ao servidor.');
             }
         };
 
@@ -113,10 +110,10 @@ export default function ConversationsScreen({ route }) {
                 chat: chatId,
                 message: newMessage,
                 sender_username: username,
-                time: new Date().toISOString(), // Adiciona a data atual
+                time: new Date().toISOString(),
             };
-    
-            ws.send(JSON.stringify(messageData)); // Envia ao WebSocket
+
+            ws.send(JSON.stringify(messageData));
             setNewMessage('');
         }
     };
@@ -129,24 +126,26 @@ export default function ConversationsScreen({ route }) {
                 return;
             }
 
-            const response = await fetch(`${API_DEV_URL}/concluir-troca/${chatId}/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await axios.post(
+                `${API_DEV_URL}/concluir-troca/${chatId}/`,
+                {},
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.status === 200) {
+                const data = response.data;
                 Alert.alert('Sucesso', data.mensagem);
                 setTrocaStatus(data.mensagem.includes('concluída') ? 'Concluída' : 'Aguardando confirmação');
             } else {
-                const errorData = await response.json();
-                Alert.alert('Erro', errorData.erro || 'Erro ao concluir a troca');
+                Alert.alert('Erro', 'Erro ao concluir a troca.');
             }
         } catch (error) {
             console.error('Erro ao concluir a troca:', error);
+            Alert.alert('Erro', 'Falha ao conectar ao servidor.');
         }
     };
 
