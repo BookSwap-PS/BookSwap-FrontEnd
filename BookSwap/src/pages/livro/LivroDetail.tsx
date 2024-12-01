@@ -238,10 +238,37 @@ return (
                     {authenticatedUserId !== livro.perfil_id && (
                         <TouchableOpacity
                             style={styles.ownerProfileButton}
-                            onPress={() => navigation.navigate('UserProfile', { userId: livro.perfil_id })}
+                            onPress={async () => {
+                                try {
+                                    const token = await AsyncStorage.getItem('token');
+                                    if (!token) {
+                                        console.log('Token não encontrado');
+                                        return;
+                                    }
+
+                                    const response = await fetch(`${API_DEV_URL}/perfil/${livro.perfil_id}/`, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json',
+                                        },
+                                    });
+
+                                    const perfil = await response.json();
+
+                                    if (perfil.usuario && perfil.usuario.id) {
+                                        navigation.navigate('UserProfile', { userId: perfil.usuario.id });
+                                    } else {
+                                        console.error('Erro ao encontrar o usuário associado ao perfil');
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao buscar o perfil:', error);
+                                }
+                            }}
                         >
                             <Text style={styles.ownerProfileButtonText}>@{livro.dono}</Text>
                         </TouchableOpacity>
+
                     )}
                     <View style={styles.likeContainer}>
                         <TouchableOpacity onPress={handleCurtir}>

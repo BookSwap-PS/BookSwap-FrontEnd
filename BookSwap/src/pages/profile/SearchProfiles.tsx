@@ -26,6 +26,7 @@ interface Usuario {
         last_name: string;
         username: string;
         email: string;
+        id: number;
     };
 }
 
@@ -42,19 +43,19 @@ export default function SearchUser() {
     const fetchUsuarios = async (query: string = '') => {
         try {
             setLoading(true);
-    
+
             let url = `${apiUrl}/perfil/`; // Usando o endpoint correto para buscar perfis
             if (query) {
                 url += `?search=${query}`;
             }
-    
+
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('Perfis encontrados:', data); // Log para verificar a resposta da API
@@ -69,7 +70,7 @@ export default function SearchUser() {
             setLoading(false);
         }
     };
-    
+
     const onRefresh = async () => {
         setRefreshing(true);
         await fetchUsuarios();
@@ -84,12 +85,44 @@ export default function SearchUser() {
         fetchUsuarios(searchQuery);
     };
 
-    const handleProfileClick = (id: number) => {
-        navigation.navigate('UserProfile', { userId: id });  // Navegando para a página de perfil (UserProfile)
-    }; 
+    const handleProfileClick = (perfilId: number) => {
+        // Busca os detalhes do perfil e obtém o ID do usuário associado
+        const fetchPerfilUsuario = async () => {
+            try {
+                const token = await AsyncStorage.getItem('token');
+                if (!token) {
+                    console.log('Token não encontrado');
+                    return;
+                }
+
+                const response = await fetch(`${apiUrl}/perfil/${perfilId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const perfil = await response.json();
+
+                    if (perfil.usuario?.id) {
+                        navigation.navigate('UserProfile', { userId: perfil.usuario.id });
+                    } else {
+                        console.error('Erro: ID do usuário não encontrado no perfil.');
+                    }
+                } else {
+                    console.error('Erro ao buscar o perfil.');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar o perfil:', error);
+            }
+        };
+
+        fetchPerfilUsuario();
+    };
 
     const renderItem = ({ item }: { item: Usuario }) => {
-        // Acessando os dados, seja diretamente ou dentro de 'usuario'
         const firstName = item.first_name || item.usuario?.first_name || '';
         const lastName = item.last_name || item.usuario?.last_name || '';
         const username = item.username || item.usuario?.username || '';
@@ -186,15 +219,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     listContent: {
-        paddingBottom: 20, // Reduzido o padding inferior para ajustar o tamanho dos containers
+        paddingBottom: 20,
     },
     userCard: {
         backgroundColor: '#fff',
         borderRadius: 10,
-        padding: 8, // Reduzido o padding do card
-        marginBottom: 10, // Reduzido o espaço entre os cards
+        padding: 8,
+        marginBottom: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 }, // Diminuído o shadow
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 1,
         elevation: 1,
@@ -204,14 +237,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     profileImage: {
-        width: 60, // Reduzido o tamanho da imagem
-        height: 60, // Reduzido o tamanho da imagem
+        width: 60,
+        height: 60,
         borderRadius: 30,
         marginRight: 10,
     },
     placeholderImage: {
-        width: 60, // Reduzido o tamanho do placeholder
-        height: 60, // Reduzido o tamanho do placeholder
+        width: 60,
+        height: 60,
         borderRadius: 30,
         backgroundColor: '#34495e',
         alignItems: 'center',
@@ -227,12 +260,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     name: {
-        fontSize: 14, // Reduzido o tamanho da fonte do nome
+        fontSize: 14,
         fontWeight: 'bold',
         textAlign: 'left',
     },
     username: {
-        fontSize: 12, // Reduzido o tamanho da fonte do username
+        fontSize: 12,
         color: '#888',
         textAlign: 'left',
     },
