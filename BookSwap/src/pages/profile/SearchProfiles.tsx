@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { API_BASE_URL, API_DEV_URL } from '@env'; // Importando URLs base para API
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importando AsyncStorage para obter o token
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     View,
     Text,
@@ -12,7 +12,8 @@ import {
     TextInput,
     RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importando para navegação
+import { useNavigation } from '@react-navigation/native'; 
+import { API_DEV_URL } from '@env'; 
 
 interface Usuario {
     id: number;
@@ -35,34 +36,34 @@ export default function SearchUser() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const navigation = useNavigation(); // Inicializando navegação
-
-    // Definindo a URL base da API dependendo do ambiente
-    const apiUrl = process.env.NODE_ENV === 'development' ? API_DEV_URL : API_BASE_URL;
+    const navigation = useNavigation(); 
 
     const fetchUsuarios = async (query: string = '') => {
         try {
             setLoading(true);
 
-            let url = `${apiUrl}/perfil/`; // Usando o endpoint correto para buscar perfis
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+                console.error('Token não encontrado.');
+                return;
+            }
+
+            console.log('Token usado na requisição:', token);
+
+            let url = `${API_DEV_URL}/perfil/`;
             if (query) {
                 url += `?search=${query}`;
             }
 
-            const response = await fetch(url, {
-                method: 'GET',
+            const response = await axios.get(url, {
                 headers: {
+                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Perfis encontrados:', data); // Log para verificar a resposta da API
-                setUsuarios(data);
-            } else {
-                const errorData = await response.json();
-                console.error('Erro ao buscar perfis:', errorData);
+            if (response.status === 200) {
+                setUsuarios(response.data);
             }
         } catch (error) {
             console.error('Erro ao buscar perfis:', error);
@@ -86,25 +87,25 @@ export default function SearchUser() {
     };
 
     const handleProfileClick = (perfilId: number) => {
-        // Busca os detalhes do perfil e obtém o ID do usuário associado
         const fetchPerfilUsuario = async () => {
             try {
                 const token = await AsyncStorage.getItem('token');
                 if (!token) {
-                    console.log('Token não encontrado');
+                    console.error('Token não encontrado.');
                     return;
                 }
 
-                const response = await fetch(`${apiUrl}/perfil/${perfilId}/`, {
-                    method: 'GET',
+                console.log('Token usado para buscar perfil:', token);
+
+                const response = await axios.get(`${API_DEV_URL}/perfil/${perfilId}/`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
 
-                if (response.ok) {
-                    const perfil = await response.json();
+                if (response.status === 200) {
+                    const perfil = response.data;
 
                     if (perfil.usuario?.id) {
                         navigation.navigate('UserProfile', { userId: perfil.usuario.id });
